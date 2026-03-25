@@ -23,6 +23,9 @@ export default function LoginPage() {
     try {
       setLoading(true);
       setError("");
+      if (!auth) {
+        throw new Error("Firebase configuration is missing. Please add credentials to .env.local.");
+      }
       const result = await signInWithPopup(auth, googleProvider);
       if (result.user.email) {
         setEmail(result.user.email);
@@ -48,7 +51,7 @@ export default function LoginPage() {
         });
         const data = await res.json();
         
-        if (data.success || data.status === "pending" || data.error?.includes("fallback")) {
+        if (data.success || data.status === "pending") {
             setStep("2FA");
         } else {
             setError(data.error || "Failed to send OTP.");
@@ -74,8 +77,7 @@ export default function LoginPage() {
         });
         const data = await res.json();
         
-        if (data.success || data.status === "pending" || data.error?.includes("fallback")) {
-            // Success or Fallback
+        if (data.success || data.status === "pending") {
             setStep("2FA");
         } else {
             setError(data.error || "Failed to send OTP.");
@@ -101,9 +103,8 @@ export default function LoginPage() {
         });
         const data = await res.json();
 
-        if (data.success || data.status === "approved" || data.error?.includes("fallback")) {
+        if (data.success || data.status === "approved") {
             setStep("KEY_GEN");
-            // Simulate Key Generation Delay
             setTimeout(() => {
                 localStorage.setItem("aegis_user_email", email);
                 router.push("/dashboard");
@@ -119,80 +120,97 @@ export default function LoginPage() {
     }
   };
 
+  const inputClass = "w-full bg-cyan-50/50 border border-cyan-100 shadow-[inset_0_2px_4px_rgba(8,145,178,0.05)] rounded-2xl py-3.5 pl-12 pr-4 text-slate-800 focus:bg-white focus:outline-none focus:border-cyan-400 focus:ring-[3px] focus:ring-cyan-100 transition-all text-sm font-bold placeholder-slate-500";
+  const labelClass = "block text-[11px] font-extrabold text-teal-600/80 mb-2 uppercase tracking-widest";
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-600 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Orbs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-200/60 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-sky-200/60 blur-[120px] pointer-events-none" />
+    <div className="min-h-screen text-slate-700 flex flex-col pt-16 items-center p-4 relative overflow-hidden"
+      style={{ background: "linear-gradient(135deg, #f9feff 0%, #f0fafd 20%, #f5fdf9 60%, #fdfffe 100%)" }}>
+
+      {/* Decorative blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-300/40 blur-[120px] pointer-events-none float-anim" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-300/30 blur-[120px] pointer-events-none float-anim" style={{ animationDelay: "2s" }} />
+      <div className="absolute top-[30%] right-[10%] w-[30%] h-[30%] rounded-full bg-sky-300/20 blur-[100px] pointer-events-none float-anim" style={{ animationDelay: "4s" }} />
       
-      <div className="w-full max-w-md relative z-10">
-        <Link href="/" className="flex items-center justify-center gap-3 mb-10 hover:opacity-80 transition-opacity">
-          <ShieldCheck className="w-8 h-8 text-sky-500" />
-          <span className="text-2xl font-bold tracking-wider text-slate-900">AEGIS<span className="text-sky-500">.</span></span>
+      {/* Background Grid */}
+      <div className="absolute inset-0 z-[-1] bg-[linear-gradient(to_right,#0891b20a_1px,transparent_1px),linear-gradient(to_bottom,#0891b20a_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,#000_70%,transparent_100%)]" />
+
+      <div className="w-full max-w-lg relative z-10">
+        {/* Logo */}
+        <Link href="/" className="flex items-center justify-center gap-3 mb-8 hover:opacity-80 transition-opacity">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center shadow-lg shadow-cyan-200">
+            <ShieldCheck className="w-6 h-6 text-white" />
+          </div>
+          <span className="text-2xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 drop-shadow-sm">
+            AEGIS
+          </span>
         </Link>
 
-        <div className="glass-panel p-8 rounded-2xl border border-slate-200 shadow-xl bg-white backdrop-blur-xl relative overflow-hidden">
+        {/* Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="card-3d gradient-border-card p-8 sm:p-10 rounded-[2rem] border border-white/60 shadow-[0_15px_60px_-15px_rgba(8,145,178,0.25)] relative overflow-hidden"
+        >
+          {/* Internal gradient mesh for card */}
+          <div className="absolute inset-0 z-[-1] bg-gradient-to-b from-white to-cyan-50/30" />
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-teal-400/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-cyan-400/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Subtle top highlight */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80 rounded-b-full" />
+
           <AnimatePresence mode="wait">
-            
+
             {step === "LOGIN" && (
               <motion.div key="login" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome Back</h2>
-                <p className="text-slate-500 text-sm mb-6">Authenticate to access your encrypted PhR vault.</p>
-                
-                {error && <div className="mb-4 p-3 rounded bg-rose-100 border border-rose-500/20 text-rose-600 text-xs">{error}</div>}
+                <div className="mb-8 text-center">
+                  <h2 className="text-3xl font-black mb-2 inline-block text-cyan-900">
+                    Welcome Back
+                  </h2>
+                  <p className="text-slate-500 text-sm mt-2 font-medium">Authenticate to access your encrypted PHR vault.</p>
+                </div>
 
-                <form onSubmit={handleLoginSubmit} className="space-y-4">
+                {error && <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-semibold">{error}</div>}
+
+                <form onSubmit={handleLoginSubmit} className="space-y-5">
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5 uppercase tracking-wider">Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                      <input 
-                        type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all" 
-                        placeholder="patient@aegis-phr.io"
-                      />
+                    <label className={labelClass}>Email Address</label>
+                    <div className="relative group">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-[20px] h-[20px] text-teal-500 group-focus-within:text-cyan-500 group-focus-within:drop-shadow-sm transition-colors" />
+                      <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className={inputClass} placeholder="patient@aegis-phr.io" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5 uppercase tracking-wider">Password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                      <input 
-                        type="password" required value={password} onChange={e => setPassword(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all" 
-                        placeholder="••••••••••••"
-                      />
+                    <label className={labelClass}>Password</label>
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-[20px] h-[20px] text-teal-500 group-focus-within:text-cyan-500 group-focus-within:drop-shadow-sm transition-colors" />
+                      <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className={inputClass} placeholder="••••••••••••" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5 uppercase tracking-wider">Phone Number (For 2FA)</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                      <input 
-                        type="tel" required value={phone} onChange={e => setPhone(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all" 
-                        placeholder="+1234567890"
-                      />
+                    <label className={labelClass}>Phone Number (For 2FA)</label>
+                    <div className="relative group">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-[20px] h-[20px] text-teal-500 group-focus-within:text-cyan-500 group-focus-within:drop-shadow-sm transition-colors" />
+                      <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className={inputClass} placeholder="+1234567890" />
                     </div>
                   </div>
-                  
-                  <button type="submit" disabled={loading} className="w-full bg-sky-600 hover:bg-sky-600 disabled:opacity-50 text-slate-900 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 mt-6">
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : "Authenticate"} <ArrowRight className="w-4 h-4" />
+
+                  <button type="submit" disabled={loading}
+                    className="w-full mt-6 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 text-white py-4 rounded-2xl font-extrabold transition-all flex items-center justify-center gap-2 shadow-[0_8px_16px_-4px_rgba(8,145,178,0.4)] hover:shadow-[0_12px_20px_-4px_rgba(8,145,178,0.5)] hover:-translate-y-1">
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin"/> : "Authenticate Portal"} <ArrowRight className="w-5 h-5" />
                   </button>
                 </form>
 
-                <div className="mt-6 flex items-center justify-between">
-                  <span className="w-1/5 border-b border-slate-200"></span>
-                  <span className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Or</span>
-                  <span className="w-1/5 border-b border-slate-200"></span>
+                <div className="mt-8 flex items-center gap-4">
+                  <span className="flex-1 border-t border-cyan-100" />
+                  <span className="text-[10px] text-teal-600 font-bold uppercase tracking-widest bg-cyan-50/80 px-3 rounded-full py-1">Or</span>
+                  <span className="flex-1 border-t border-cyan-100" />
                 </div>
                 
-                <button 
-                  onClick={handleGoogleSignIn}
-                  disabled={loading}
-                  className="w-full mt-6 bg-white hover:bg-slate-100 text-slate-900 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-3 disabled:opacity-50"
-                  type="button"
-                >
+                <button onClick={handleGoogleSignIn} disabled={loading} type="button"
+                  className="w-full mt-6 bg-white hover:bg-cyan-50 text-teal-800 py-3.5 rounded-2xl font-bold transition-all flex items-center justify-center gap-3 disabled:opacity-50 border-2 border-cyan-100 shadow-sm hover:shadow-cyan-100 hover:border-cyan-300">
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -202,32 +220,28 @@ export default function LoginPage() {
                   Continue with Google
                 </button>
                 
-                <div className="mt-6 text-center text-sm text-slate-500">
-                  Don&apos;t have an Aegis Identity? <Link href="/signup" className="text-sky-600 hover:text-sky-300">Register</Link>
+                <div className="mt-8 text-center text-sm text-slate-500 font-medium">
+                  Don&apos;t have an Identity? <Link href="/signup" className="text-cyan-600 hover:text-cyan-500 font-extrabold ml-1 underline decoration-cyan-300 underline-offset-4 pointer-events-auto">Register strictly</Link>
                 </div>
               </motion.div>
             )}
 
             {step === "PHONE_PROMPT" && (
-              <motion.div key="phone_prompt" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">Secure Your Account</h2>
-                <p className="text-slate-500 text-sm mb-6">Google Sign-In successful. Now link a phone number to enable SMS 2FA.</p>
-                {error && <div className="mb-4 p-3 rounded bg-rose-100 border border-rose-500/20 text-rose-600 text-xs">{error}</div>}
-
-                <form onSubmit={handlePhoneSubmit} className="space-y-4">
+              <motion.div key="phone_prompt" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }} className="text-center">
+                <h2 className="text-3xl font-black text-cyan-900 mb-3 inline-block">Secure Action</h2>
+                <p className="text-slate-500 text-sm mb-8 font-medium">Google Sign-In successful. Link a trusted phone number to enable two-factor SMS validation.</p>
+                {error && <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-semibold">{error}</div>}
+                <form onSubmit={handlePhoneSubmit} className="space-y-4 text-left">
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1.5 uppercase tracking-wider">Phone Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                      <input 
-                        type="tel" required value={phone} onChange={e => setPhone(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all" 
-                        placeholder="+1234567890"
-                      />
+                    <label className={labelClass}>Phone Number</label>
+                    <div className="relative group">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-[20px] h-[20px] text-teal-500 group-focus-within:text-cyan-500 transition-colors" />
+                      <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} className={inputClass} placeholder="+1234567890" />
                     </div>
                   </div>
-                  <button type="submit" disabled={loading} className="w-full bg-sky-600 hover:bg-sky-600 disabled:opacity-50 text-slate-900 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 mt-6">
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : "Send OTP Segment"} <ArrowRight className="w-4 h-4" />
+                  <button type="submit" disabled={loading}
+                    className="w-full mt-6 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 text-white py-4 rounded-2xl font-extrabold transition-all flex items-center justify-center gap-2 shadow-[0_8px_16px_-4px_rgba(8,145,178,0.4)] hover:shadow-lg hover:-translate-y-1">
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin"/> : "Dispatch OTP Security"} <ArrowRight className="w-5 h-5" />
                   </button>
                 </form>
               </motion.div>
@@ -235,63 +249,67 @@ export default function LoginPage() {
 
             {step === "2FA" && (
               <motion.div key="2fa" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }} className="text-center">
-                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-indigo-500/20">
-                  <Smartphone className="w-8 h-8 text-indigo-600" />
+                <div className="w-24 h-24 bg-gradient-to-br from-cyan-100 to-teal-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6 border-4 border-white shadow-xl float-anim">
+                  <Smartphone className="w-10 h-10 text-cyan-500 drop-shadow-md" />
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">Two-Factor Auth</h2>
-                <p className="text-slate-500 text-sm mb-6">Enter the verification code sent to {phone}.</p>
-                
-                {error && <div className="mb-4 p-3 rounded bg-rose-100 border border-rose-500/20 text-rose-600 text-xs">{error}</div>}
-
-                <form onSubmit={handle2FASubmit} className="space-y-4">
-                  <input 
+                <h2 className="text-3xl font-black text-cyan-900 mb-3 bg-clip-text text-transparent bg-gradient-to-r from-cyan-600 to-teal-600">Two-Factor Auth</h2>
+                <p className="text-cyan-900/60 text-sm mb-8 font-medium">Enter the verification code sent to <span className="font-bold text-cyan-700">{phone}</span>.</p>
+                {error && <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-semibold">{error}</div>}
+                <form onSubmit={handle2FASubmit} className="space-y-4 text-left">
+                  <input
                     type="text" required maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
-                    className="w-full bg-white border border-slate-200 rounded-lg py-3 text-center text-2xl tracking-[0.5em] text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-mono" 
+                    className="w-full bg-cyan-50/50 border-2 border-cyan-100 rounded-2xl py-4 text-center text-4xl tracking-[0.4em] font-black text-cyan-950 focus:outline-none focus:border-cyan-400 focus:bg-white focus:ring-[4px] focus:ring-cyan-100 transition-all font-mono shadow-[inset_0_2px_4px_rgba(8,145,178,0.05)] text-slate-800 placeholder-teal-400"
                     placeholder="000000"
                   />
-                  <button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-slate-900 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 mt-4 relative overflow-hidden group">
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                        <>
-                            <span className="relative z-10">Verify Device</span>
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                        </>
+                  <button type="submit" disabled={loading}
+                    className="w-full bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 text-white py-4 rounded-2xl font-extrabold transition-all flex items-center justify-center gap-2 shadow-[0_8px_16px_-4px_rgba(8,145,178,0.4)] mt-6 hover:-translate-y-1 relative overflow-hidden group">
+                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
+                      <>
+                        <span className="relative z-10 text-base">Verify Device</span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                      </>
                     )}
                   </button>
                 </form>
-                
-                <button onClick={() => setStep("LOGIN")} className="mt-6 text-sm text-slate-500 hover:text-slate-900 transition-colors">
-                  Back to Login
+                <button onClick={() => setStep("LOGIN")} className="mt-8 text-[13px] text-cyan-500 hover:text-cyan-600 transition-colors font-bold underline decoration-cyan-200 underline-offset-4">
+                  ← Back to Login
                 </button>
               </motion.div>
             )}
 
             {step === "KEY_GEN" && (
               <motion.div key="keygen" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-8">
-                <div className="relative w-24 h-24 mx-auto mb-6 flex items-center justify-center">
-                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 8, ease: "linear" }} className="absolute inset-0 border-2 border-dashed border-sky-500/30 rounded-full" />
-                  <motion.div animate={{ rotate: -360 }} transition={{ repeat: Infinity, duration: 12, ease: "linear" }} className="absolute inset-2 border-2 border-dashed border-indigo-500/40 rounded-full" />
-                  <Cpu className="w-8 h-8 text-sky-600 absolute" />
-                  <Key className="w-4 h-4 text-emerald-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ml-4 mt-4" />
+                <div className="relative w-32 h-32 mx-auto mb-10 flex items-center justify-center">
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+                    className="absolute inset-0 border-[4px] border-dashed border-cyan-200 rounded-full" />
+                  <motion.div animate={{ rotate: -360 }} transition={{ repeat: Infinity, duration: 12, ease: "linear" }}
+                    className="absolute inset-5 border-[4px] border-dashed border-teal-200 rounded-full" />
+                  <div className="absolute inset-9 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-full flex items-center justify-center shadow-lg shadow-cyan-300">
+                    <Cpu className="w-8 h-8 text-white drop-shadow-md" />
+                  </div>
+                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 2.5 }} className="absolute -top-1 -right-1 bg-white p-2.5 rounded-full shadow-xl">
+                   <Key className="w-6 h-6 text-emerald-500" />
+                  </motion.div>
                 </div>
-                
-                <h2 className="text-xl font-bold text-slate-900 mb-2">Generating Session Keys</h2>
-                <div className="text-slate-500 text-sm space-y-1 font-mono">
-                  <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>✓ Dilithium Signature Verified</motion.p>
-                  <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}>✓ Negotiating Kyber-1024 Tunnel</motion.p>
-                  <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.5 }}>✓ Issuing Ephemeral Private Key...</motion.p>
+                <h2 className="text-2xl font-black text-slate-800 mb-5 bg-clip-text text-transparent bg-gradient-to-r from-cyan-600 to-teal-600">Executing Cryptography</h2>
+                <div className="bg-cyan-50/50 rounded-2xl p-6 border border-cyan-100 border-b-[3px] shadow-sm">
+                  <div className="text-cyan-900 text-[13px] space-y-4 font-mono font-bold text-left">
+                    <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="flex items-center gap-3"><span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[11px] shadow-sm">✓</span> Dilithium Signature Secure</motion.p>
+                    <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.5 }} className="flex items-center gap-3"><span className="w-6 h-6 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-[11px] shadow-sm">✓</span> Tunneling Kyber-1024 Node</motion.p>
+                    <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 2.5 }} className="flex items-center gap-3"><span className="w-6 h-6 rounded-full bg-cyan-100 text-cyan-600 flex items-center justify-center text-[11px] shadow-sm">✓</span> Fabricating Patient Ephemerals</motion.p>
+                  </div>
                 </div>
-                
-                <div className="mt-8 flex items-center justify-center text-sky-600 text-sm font-medium gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Securing channel...
+                <div className="mt-8 flex items-center justify-center text-cyan-600 text-sm font-black tracking-widest uppercase gap-3">
+                  <Loader2 className="w-5 h-5 animate-spin" /> Committing Handshake...
                 </div>
               </motion.div>
             )}
 
           </AnimatePresence>
-        </div>
+        </motion.div>
         
-        <p className="text-center text-xs text-slate-600 mt-8">
-          Secured by End-to-End Post-Quantum Lattice Cryptography
+        <p className="text-center text-[11px] font-bold text-teal-600/50 mt-10 tracking-widest uppercase">
+          🔒 End-to-End Post-Quantum Lattice Node
         </p>
       </div>
     </div>

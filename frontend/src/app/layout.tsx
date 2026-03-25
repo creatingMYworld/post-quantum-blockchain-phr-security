@@ -19,12 +19,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} antialiased selection:bg-sky-500/30`}>
+    <html lang="en" className="">
+      <body className={`${inter.variable} antialiased selection:bg-cyan-300/40`}>
         {/* Animated Background Mesh */}
         <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
-          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-200/50 blur-[120px]" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-sky-200/50 blur-[120px]" />
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-200/40 blur-[120px]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-200/40 blur-[120px]" />
+          <div className="absolute top-[40%] left-[30%] w-[30%] h-[30%] rounded-full bg-sky-200/30 blur-[100px]" />
         </div>
         
         <div className="min-h-screen flex flex-col">

@@ -1,0 +1,28 @@
+interactive rebase in progress; onto b722eda
+Last command done (1 command done):
+   pick 1dc0d3c # chore: setup project environment and update dependencies
+No commands remaining.
+You are currently rebasing branch 'main' on 'b722eda'.
+  (fix conflicts and then run "git rebase --continue")
+  (use "git rebase --skip" to skip this patch)
+  (use "git rebase --abort" to check out the original branch)
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	modified:   frontend/next.config.ts
+	modified:   frontend/src/app/signup/page.tsx
+	modified:   frontend/src/components/Navbar.tsx
+
+Unmerged paths:
+  (use "git restore --staged <file>..." to unstage)
+  (use "git add <file>..." to mark resolution)
+	both modified:   frontend/src/app/dashboard/page.tsx
+	both modified:   frontend/src/app/globals.css
+	both modified:   frontend/src/app/layout.tsx
+	both modified:   frontend/src/app/login/page.tsx
+	both modified:   frontend/src/app/page.tsx
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	git_status.txt
+
