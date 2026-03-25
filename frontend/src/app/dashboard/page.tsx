@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { 
   Activity, ShieldCheck, Database, FileText, Settings, LogOut, 
   Search, Bell, Fingerprint, History, User, CheckCircle2, XCircle,
@@ -150,7 +150,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.3, ease: "easeInOut" as const }}
             className="p-10 max-w-[1400px] mx-auto w-full flex-1"
           >
             <div className="flex items-end justify-between mb-10">

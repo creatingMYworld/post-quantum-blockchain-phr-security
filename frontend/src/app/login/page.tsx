@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { ShieldCheck, Mail, Lock, Key, Smartphone, ArrowRight, Loader2, Cpu, Phone } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -150,7 +150,7 @@ export default function LoginPage() {
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          transition={{ duration: 0.6, ease: "easeOut" as const }}
           className="card-3d gradient-border-card p-8 sm:p-10 rounded-[2rem] border border-white/60 shadow-[0_15px_60px_-15px_rgba(8,145,178,0.25)] relative overflow-hidden"
         >
           {/* Internal gradient mesh for card */}
@@ -280,9 +280,9 @@ export default function LoginPage() {
             {step === "KEY_GEN" && (
               <motion.div key="keygen" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-8">
                 <div className="relative w-32 h-32 mx-auto mb-10 flex items-center justify-center">
-                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 8, ease: "linear" as const }}
                     className="absolute inset-0 border-[4px] border-dashed border-cyan-200 rounded-full" />
-                  <motion.div animate={{ rotate: -360 }} transition={{ repeat: Infinity, duration: 12, ease: "linear" }}
+                  <motion.div animate={{ rotate: -360 }} transition={{ repeat: Infinity, duration: 12, ease: "linear" as const }}
                     className="absolute inset-5 border-[4px] border-dashed border-teal-200 rounded-full" />
                   <div className="absolute inset-9 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-full flex items-center justify-center shadow-lg shadow-cyan-300">
                     <Cpu className="w-8 h-8 text-white drop-shadow-md" />
