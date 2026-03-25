@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-quantum-bg: #030712;
-  --color-quantum-surface: #111827;
-  --color-quantum-neon: #0ea5e9;
-  --color-quantum-purple: #8b5cf6;
-  --color-quantum-emerald: #10b981;
+  --color-quantum-bg: #f8fafc;
+  --color-quantum-surface: #ffffff;
+  --color-quantum-neon: #0284c7;
+  --color-quantum-purple: #7c3aed;
+  --color-quantum-emerald: #059669;
   
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-sky-400 via-indigo-400 to-purple-400;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-sky-600 via-indigo-600 to-purple-600;
   }
   
   .glass-panel {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+    @apply bg-white/60 backdrop-blur-xl border border-slate-200 shadow-xl;
   }
 
   .glow-border {
@@ -39,13 +39,13 @@
 
 :root {
   background-color: var(--color-quantum-bg);
-  color: #f8fafc;
+  color: #0f172a;
 }
 
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #030712 50%, #030712 100%);
+  background: radial-gradient(circle at 50% 0%, #e0f2fe 0%, #f8fafc 50%, #f8fafc 100%);
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -56,16 +56,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #030712; 
+  background: #f1f5f9; 
 }
  
 ::-webkit-scrollbar-thumb {
-  background: #334155; 
+  background: #cbd5e1; 
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569; 
+  background: #94a3b8; 
 }
 
 /* Hide Dev Indicators (Vercel Toolbar & Next.js Build Badge) */

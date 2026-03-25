@@ -120,71 +120,71 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#030712] text-slate-300 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 text-slate-600 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Orbs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-900/20 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-sky-900/20 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-200/60 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-sky-200/60 blur-[120px] pointer-events-none" />
       
       <div className="w-full max-w-md relative z-10">
         <Link href="/" className="flex items-center justify-center gap-3 mb-10 hover:opacity-80 transition-opacity">
           <ShieldCheck className="w-8 h-8 text-sky-500" />
-          <span className="text-2xl font-bold tracking-wider text-white">AEGIS<span className="text-sky-500">.</span></span>
+          <span className="text-2xl font-bold tracking-wider text-slate-900">AEGIS<span className="text-sky-500">.</span></span>
         </Link>
 
-        <div className="glass-panel p-8 rounded-2xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] bg-black/40 backdrop-blur-xl relative overflow-hidden">
+        <div className="glass-panel p-8 rounded-2xl border border-slate-200 shadow-xl bg-white backdrop-blur-xl relative overflow-hidden">
           <AnimatePresence mode="wait">
             
             {step === "LOGIN" && (
               <motion.div key="login" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
-                <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
-                <p className="text-slate-400 text-sm mb-6">Authenticate to access your encrypted PhR vault.</p>
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome Back</h2>
+                <p className="text-slate-500 text-sm mb-6">Authenticate to access your encrypted PhR vault.</p>
                 
-                {error && <div className="mb-4 p-3 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">{error}</div>}
+                {error && <div className="mb-4 p-3 rounded bg-rose-100 border border-rose-500/20 text-rose-600 text-xs">{error}</div>}
 
                 <form onSubmit={handleLoginSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Email Address</label>
+                    <label className="block text-xs font-medium text-slate-500 mb-1.5 uppercase tracking-wider">Email Address</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                       <input 
                         type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg py-2.5 pl-10 pr-4 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all" 
+                        className="w-full bg-white border border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all" 
                         placeholder="patient@aegis-phr.io"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Password</label>
+                    <label className="block text-xs font-medium text-slate-500 mb-1.5 uppercase tracking-wider">Password</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                       <input 
                         type="password" required value={password} onChange={e => setPassword(e.target.value)}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg py-2.5 pl-10 pr-4 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all" 
+                        className="w-full bg-white border border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all" 
                         placeholder="••••••••••••"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Phone Number (For 2FA)</label>
+                    <label className="block text-xs font-medium text-slate-500 mb-1.5 uppercase tracking-wider">Phone Number (For 2FA)</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                       <input 
                         type="tel" required value={phone} onChange={e => setPhone(e.target.value)}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg py-2.5 pl-10 pr-4 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all" 
+                        className="w-full bg-white border border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all" 
                         placeholder="+1234567890"
                       />
                     </div>
                   </div>
                   
-                  <button type="submit" disabled={loading} className="w-full bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 mt-6">
+                  <button type="submit" disabled={loading} className="w-full bg-sky-600 hover:bg-sky-600 disabled:opacity-50 text-slate-900 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 mt-6">
                     {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : "Authenticate"} <ArrowRight className="w-4 h-4" />
                   </button>
                 </form>
 
                 <div className="mt-6 flex items-center justify-between">
-                  <span className="w-1/5 border-b border-white/10"></span>
+                  <span className="w-1/5 border-b border-slate-200"></span>
                   <span className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Or</span>
-                  <span className="w-1/5 border-b border-white/10"></span>
+                  <span className="w-1/5 border-b border-slate-200"></span>
                 </div>
                 
                 <button 
@@ -203,30 +203,30 @@ export default function LoginPage() {
                 </button>
                 
                 <div className="mt-6 text-center text-sm text-slate-500">
-                  Don&apos;t have an Aegis Identity? <Link href="/signup" className="text-sky-400 hover:text-sky-300">Register</Link>
+                  Don&apos;t have an Aegis Identity? <Link href="/signup" className="text-sky-600 hover:text-sky-300">Register</Link>
                 </div>
               </motion.div>
             )}
 
             {step === "PHONE_PROMPT" && (
               <motion.div key="phone_prompt" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
-                <h2 className="text-2xl font-bold text-white mb-2">Secure Your Account</h2>
-                <p className="text-slate-400 text-sm mb-6">Google Sign-In successful. Now link a phone number to enable SMS 2FA.</p>
-                {error && <div className="mb-4 p-3 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">{error}</div>}
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">Secure Your Account</h2>
+                <p className="text-slate-500 text-sm mb-6">Google Sign-In successful. Now link a phone number to enable SMS 2FA.</p>
+                {error && <div className="mb-4 p-3 rounded bg-rose-100 border border-rose-500/20 text-rose-600 text-xs">{error}</div>}
 
                 <form onSubmit={handlePhoneSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Phone Number</label>
+                    <label className="block text-xs font-medium text-slate-500 mb-1.5 uppercase tracking-wider">Phone Number</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                       <input 
                         type="tel" required value={phone} onChange={e => setPhone(e.target.value)}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg py-2.5 pl-10 pr-4 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all" 
+                        className="w-full bg-white border border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-slate-900 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all" 
                         placeholder="+1234567890"
                       />
                     </div>
                   </div>
-                  <button type="submit" disabled={loading} className="w-full bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 mt-6">
+                  <button type="submit" disabled={loading} className="w-full bg-sky-600 hover:bg-sky-600 disabled:opacity-50 text-slate-900 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 mt-6">
                     {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : "Send OTP Segment"} <ArrowRight className="w-4 h-4" />
                   </button>
                 </form>
@@ -235,21 +235,21 @@ export default function LoginPage() {
 
             {step === "2FA" && (
               <motion.div key="2fa" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }} className="text-center">
-                <div className="w-16 h-16 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-indigo-500/20">
-                  <Smartphone className="w-8 h-8 text-indigo-400" />
+                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-indigo-500/20">
+                  <Smartphone className="w-8 h-8 text-indigo-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-2">Two-Factor Auth</h2>
-                <p className="text-slate-400 text-sm mb-6">Enter the verification code sent to {phone}.</p>
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">Two-Factor Auth</h2>
+                <p className="text-slate-500 text-sm mb-6">Enter the verification code sent to {phone}.</p>
                 
-                {error && <div className="mb-4 p-3 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">{error}</div>}
+                {error && <div className="mb-4 p-3 rounded bg-rose-100 border border-rose-500/20 text-rose-600 text-xs">{error}</div>}
 
                 <form onSubmit={handle2FASubmit} className="space-y-4">
                   <input 
                     type="text" required maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg py-3 text-center text-2xl tracking-[0.5em] text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-mono" 
+                    className="w-full bg-white border border-slate-200 rounded-lg py-3 text-center text-2xl tracking-[0.5em] text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-mono" 
                     placeholder="000000"
                   />
-                  <button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 mt-4 relative overflow-hidden group">
+                  <button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-slate-900 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 mt-4 relative overflow-hidden group">
                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                         <>
                             <span className="relative z-10">Verify Device</span>
@@ -259,7 +259,7 @@ export default function LoginPage() {
                   </button>
                 </form>
                 
-                <button onClick={() => setStep("LOGIN")} className="mt-6 text-sm text-slate-500 hover:text-white transition-colors">
+                <button onClick={() => setStep("LOGIN")} className="mt-6 text-sm text-slate-500 hover:text-slate-900 transition-colors">
                   Back to Login
                 </button>
               </motion.div>
@@ -270,18 +270,18 @@ export default function LoginPage() {
                 <div className="relative w-24 h-24 mx-auto mb-6 flex items-center justify-center">
                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 8, ease: "linear" }} className="absolute inset-0 border-2 border-dashed border-sky-500/30 rounded-full" />
                   <motion.div animate={{ rotate: -360 }} transition={{ repeat: Infinity, duration: 12, ease: "linear" }} className="absolute inset-2 border-2 border-dashed border-indigo-500/40 rounded-full" />
-                  <Cpu className="w-8 h-8 text-sky-400 absolute" />
-                  <Key className="w-4 h-4 text-emerald-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ml-4 mt-4" />
+                  <Cpu className="w-8 h-8 text-sky-600 absolute" />
+                  <Key className="w-4 h-4 text-emerald-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ml-4 mt-4" />
                 </div>
                 
-                <h2 className="text-xl font-bold text-white mb-2">Generating Session Keys</h2>
-                <div className="text-slate-400 text-sm space-y-1 font-mono">
+                <h2 className="text-xl font-bold text-slate-900 mb-2">Generating Session Keys</h2>
+                <div className="text-slate-500 text-sm space-y-1 font-mono">
                   <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>✓ Dilithium Signature Verified</motion.p>
                   <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}>✓ Negotiating Kyber-1024 Tunnel</motion.p>
                   <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.5 }}>✓ Issuing Ephemeral Private Key...</motion.p>
                 </div>
                 
-                <div className="mt-8 flex items-center justify-center text-sky-400 text-sm font-medium gap-2">
+                <div className="mt-8 flex items-center justify-center text-sky-600 text-sm font-medium gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" /> Securing channel...
                 </div>
               </motion.div>
