@@ -52,16 +52,16 @@ export default function DashboardPage() {
   const handleNotification = () => alert("System Status: 0 active threats detected. Network is secure.");
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-600 flex overflow-hidden font-sans">
+    <div className="min-h-screen bg-slate-50/50 text-slate-600 flex overflow-hidden font-sans">
       {/* Sidebar Background Mesh */}
-      <div className="absolute top-0 left-0 w-64 h-full bg-white/80 backdrop-blur-3xl border-r border-slate-200 z-0" />
+      <div className="absolute top-0 left-0 w-64 h-full bg-white/80 backdrop-blur-3xl border-r border-slate-100 z-0" />
       
       {/* Sidebar */}
-      <aside className="w-64 flex flex-col justify-between py-6 px-4 relative z-10 border-r border-slate-200">
+      <aside className="w-64 flex flex-col justify-between py-6 px-4 relative z-10 border-r border-slate-100">
         <div>
           <div className="flex items-center gap-3 px-2 mb-10">
             <ShieldCheck className="w-8 h-8 text-sky-500" />
-            <span className="text-xl font-bold tracking-wider text-slate-900">AEGIS<span className="text-sky-500">.</span></span>
+            <span className="text-xl font-bold tracking-wider text-slate-800">AEGIS<span className="text-sky-500">.</span></span>
           </div>
           
           <nav className="space-y-2">
@@ -70,7 +70,7 @@ export default function DashboardPage() {
                 key={i} 
                 onClick={() => setActiveTab(item.label)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                  activeTab === item.label ? "bg-sky-100 text-sky-600 border border-sky-500/20 shadow-[inset_0_0_20px_rgba(14,165,233,0.1)]" : "hover:bg-slate-100 hover:text-slate-900"
+                  activeTab === item.label ? "bg-sky-100 text-sky-600 border border-sky-500/20 shadow-[inset_0_0_20px_rgba(14,165,233,0.1)]" : "hover:bg-slate-100 hover:text-slate-800"
                 }`}
               >
                 <item.icon className="w-5 h-5" />
@@ -84,14 +84,14 @@ export default function DashboardPage() {
           <div className="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/20 relative overflow-hidden group hover:bg-indigo-100 transition-colors cursor-pointer">
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Node Status</span>
+              <span className="text-xs font-semibold text-indigo-700 uppercase font-bold tracking-wider">Node Status</span>
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_theme(colors.emerald.400)]" />
             </div>
             <p className="text-sm font-medium text-slate-200">Ethereum Mainnet</p>
             <p className="text-xs text-slate-500 truncate mt-1">Block: #1823901</p>
           </div>
           
-          <Link href="/" className="flex items-center gap-3 px-3 py-2 text-slate-500 hover:text-slate-900 transition-colors">
+          <Link href="/" className="flex items-center gap-3 px-3 py-2 text-slate-500 hover:text-slate-800 transition-colors">
             <LogOut className="w-5 h-5" />
             <span>Logout</span>
           </Link>
@@ -101,28 +101,28 @@ export default function DashboardPage() {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col relative z-10 h-screen overflow-y-auto w-full">
         {/* Header */}
-        <header className="h-20 border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 bg-slate-50/80 backdrop-blur-lg z-20">
+        <header className="h-20 border-b border-slate-100 flex items-center justify-between px-8 sticky top-0 bg-slate-50/50/80 backdrop-blur-lg z-20">
           <div className="relative w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input 
               type="text" 
               placeholder={`Search in ${activeTab}...`}
-              className="w-full bg-slate-100 border border-slate-200 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all hover:bg-white/10"
+              className="w-full bg-slate-100 border border-slate-100 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all hover:bg-white/10"
             />
           </div>
           <div className="flex items-center gap-6">
-            <button onClick={handleNotification} className="relative text-slate-500 hover:text-slate-900 transition-colors">
+            <button onClick={handleNotification} className="relative text-slate-500 hover:text-slate-800 transition-colors">
               <Bell className="w-5 h-5" />
               <span className="absolute top-0 right-0 w-2 h-2 bg-sky-600 rounded-full border border-[#030712]" />
             </button>
-            <div className="flex items-center gap-3 pl-6 border-l border-slate-200 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setActiveTab("Settings")}>
+            <div className="flex items-center gap-3 pl-6 border-l border-slate-100 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setActiveTab("Settings")}>
               <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-500 p-[1px]">
-                <div className="w-full h-full bg-slate-50 rounded-full flex items-center justify-center">
+                <div className="w-full h-full bg-slate-50/50 rounded-full flex items-center justify-center">
                   <User className="w-5 h-5 text-slate-600" />
                 </div>
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-semibold text-slate-900">{userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1)}</span>
+                <span className="text-sm font-semibold text-slate-800">{userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1)}</span>
                 <span className="text-xs text-slate-500 font-mono">0x71C...49fA</span>
               </div>
             </div>
@@ -141,7 +141,7 @@ export default function DashboardPage() {
           >
             <div className="flex items-end justify-between mb-8">
               <div>
-                <h1 className="text-3xl font-bold text-slate-900 mb-2">{activeTab}</h1>
+                <h1 className="text-3xl font-bold tracking-tight text-slate-800 mb-2">{activeTab}</h1>
                 <p className="text-slate-500">
                   {activeTab === "Overview" && "Post-Quantum Lattice Decryption Active."}
                   {activeTab === "Medical Records" && "Your immutable health files stored via IPFS."}
@@ -171,15 +171,15 @@ export default function DashboardPage() {
                     >
                       <div className={`absolute top-0 right-0 w-32 h-32 ${stat.bg} ${stat.bgHover} rounded-full blur-[40px] -mr-10 -mt-10 transition-all duration-500`} />
                       <h3 className="text-sm font-semibold text-slate-500 mb-1">{stat.title}</h3>
-                      <p className="text-4xl font-light text-slate-900 mb-3">{stat.val}</p>
+                      <p className="text-5xl font-semibold tracking-tight text-slate-800 mb-3">{stat.val}</p>
                       <p className={`text-xs ${stat.text} font-medium`}>{stat.trend}</p>
                     </motion.div>
                   ))}
                 </div>
 
-                <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200">
-                  <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-                    <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                <div className="glass-panel rounded-2xl overflow-hidden border border-slate-100">
+                  <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
                       <Database className="w-5 h-5 text-sky-600" /> Recent Documents
                     </h2>
                     <button className="text-xs tracking-wider text-sky-600 hover:bg-sky-100 px-3 py-1 rounded transition-colors" onClick={() => setActiveTab("Medical Records")}>
@@ -188,19 +188,19 @@ export default function DashboardPage() {
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm whitespace-nowrap">
-                      <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
+                      <thead className="bg-slate-50/50/50 text-slate-500 border-b border-slate-100">
                         <tr>
-                          <th className="px-6 py-4 font-medium">Record ID</th>
-                          <th className="px-6 py-4 font-medium">Type</th>
-                          <th className="px-6 py-4 font-medium">Date</th>
-                          <th className="px-6 py-4 font-medium">Integrity</th>
+                          <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500">Record ID</th>
+                          <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500">Type</th>
+                          <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500">Date</th>
+                          <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500">Integrity</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
                         {mockRecords.slice(0, 3).map((record, i) => (
-                          <tr key={i} className="hover:bg-slate-50 transition-colors">
+                          <tr key={i} className="hover:bg-slate-50/50 transition-colors">
                             <td className="px-6 py-4 font-mono text-sky-600">{record.id}</td>
-                            <td className="px-6 py-4 text-slate-900 font-medium">{record.type}</td>
+                            <td className="px-6 py-4 text-slate-800 font-medium">{record.type}</td>
                             <td className="px-6 py-4 text-slate-500">{record.date}</td>
                             <td className="px-6 py-4">
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-100 text-emerald-600 border border-emerald-500/20">
@@ -220,35 +220,35 @@ export default function DashboardPage() {
             {activeTab === "Medical Records" && (
               <div className="space-y-6">
                 <div className="flex gap-4 mb-4">
-                  <button onClick={() => alert("Initializing Post-Quantum IPFS Upload sequence...")} className="flex items-center gap-2 bg-sky-600 hover:bg-sky-600 text-slate-900 px-4 py-2 rounded-lg font-medium transition-colors border border-sky-400/50 shadow-[0_0_15px_rgba(14,165,233,0.3)]">
+                  <button onClick={() => alert("Initializing Post-Quantum IPFS Upload sequence...")} className="flex items-center gap-2 bg-sky-600 hover:bg-sky-600 text-slate-800 px-4 py-2 rounded-lg font-medium transition-colors border border-sky-400/50 shadow-lg shadow-sky-500/30">
                     <UploadCloud className="w-5 h-5" /> Upload New Record
                   </button>
-                  <button onClick={() => alert("Filtering records by locally decrypted cache...")} className="flex items-center gap-2 bg-slate-100 hover:bg-white/10 text-slate-600 px-4 py-2 rounded-lg font-medium transition-colors border border-slate-200">
+                  <button onClick={() => alert("Filtering records by locally decrypted cache...")} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium transition-colors border border-slate-100">
                     Filter by Decrypted
                   </button>
                 </div>
-                <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200">
+                <div className="glass-panel rounded-2xl overflow-hidden border border-slate-100">
                   <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
+                    <thead className="bg-slate-50/50/50 text-slate-500 border-b border-slate-100">
                       <tr>
-                        <th className="px-6 py-4 font-medium">Record ID</th>
-                        <th className="px-6 py-4 font-medium">Type</th>
-                        <th className="px-6 py-4 font-medium">Date</th>
-                        <th className="px-6 py-4 font-medium">Authorized Doctor</th>
-                        <th className="px-6 py-4 font-medium">IPFS Hash (Encrypted)</th>
-                        <th className="px-6 py-4 font-medium text-right">Actions</th>
+                        <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500">Record ID</th>
+                        <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500">Type</th>
+                        <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500">Date</th>
+                        <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500">Authorized Doctor</th>
+                        <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500">IPFS Hash (Encrypted)</th>
+                        <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                        {mockRecords.map((record, i) => (
-                          <motion.tr initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 * i }} key={i} className="hover:bg-slate-50 group">
+                          <motion.tr initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 * i }} key={i} className="hover:bg-slate-50/50 group">
                             <td className="px-6 py-4 font-mono text-sky-600">{record.id}</td>
-                            <td className="px-6 py-4 text-slate-900 font-medium">{record.type}</td>
+                            <td className="px-6 py-4 text-slate-800 font-medium">{record.type}</td>
                             <td className="px-6 py-4 text-slate-500">{record.date}</td>
                             <td className="px-6 py-4 text-slate-600">{record.doctor}</td>
                             <td className="px-6 py-4 font-mono text-slate-500 text-xs">{record.hash}</td>
                             <td className="px-6 py-4 text-right">
-                              <button className="text-sky-600 uppercase text-xs font-bold tracking-wider hover:text-slate-900 transition-colors" onClick={() => alert("Initiating Crystal-Kyber Decapsulation for " + record.id)}>
+                              <button className="text-sky-600 uppercase text-xs font-bold tracking-wider hover:text-slate-800 transition-colors" onClick={() => alert("Initiating Crystal-Kyber Decapsulation for " + record.id)}>
                                 Decrypt & View
                               </button>
                             </td>
@@ -266,29 +266,29 @@ export default function DashboardPage() {
                 <div className="bg-indigo-100 border border-indigo-500/20 rounded-xl p-4 flex gap-4 items-start">
                   <Key className="w-6 h-6 text-indigo-600 shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="text-slate-900 font-medium mb-1">Smart Contract Access Control</h3>
+                    <h3 className="text-slate-800 font-medium mb-1">Smart Contract Access Control</h3>
                     <p className="text-sm text-indigo-800/80">
                       Granting access delegates a post-quantum encrypted viewing key to the doctor&apos;s Ethereum public address.
                       Revoking access destroys the capability on-chain immutably.
                     </p>
                   </div>
                 </div>
-                <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200">
+                <div className="glass-panel rounded-2xl overflow-hidden border border-slate-100">
                   <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
+                    <thead className="bg-slate-50/50/50 text-slate-500 border-b border-slate-100">
                       <tr>
-                        <th className="px-6 py-4 font-medium">Doctor Name</th>
-                        <th className="px-6 py-4 font-medium">Specialty</th>
-                        <th className="px-6 py-4 font-medium">Eth Wallet Address</th>
-                        <th className="px-6 py-4 font-medium">Date Granted</th>
-                        <th className="px-6 py-4 font-medium">Status</th>
-                        <th className="px-6 py-4 font-medium text-right">Revoke / Grant</th>
+                        <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500">Doctor Name</th>
+                        <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500">Specialty</th>
+                        <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500">Eth Wallet Address</th>
+                        <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500">Date Granted</th>
+                        <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500">Status</th>
+                        <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-slate-500 text-right">Revoke / Grant</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {mockPolicies.map((pol, i) => (
-                        <tr key={i} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-6 py-4 text-slate-900 font-medium">{pol.doctor}</td>
+                        <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-4 text-slate-800 font-medium">{pol.doctor}</td>
                           <td className="px-6 py-4 text-slate-500">{pol.specialty}</td>
                           <td className="px-6 py-4 font-mono text-indigo-600">{pol.wallet}</td>
                           <td className="px-6 py-4 text-slate-500">{pol.granted}</td>
@@ -316,9 +316,9 @@ export default function DashboardPage() {
 
             {/* AUDIT LOGS TAB */}
             {activeTab === "Audit Logs" && (
-              <div className="glass-panel rounded-2xl border border-slate-200 bg-white">
-                <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 bg-white">
-                  <h3 className="text-slate-900 font-mono flex items-center gap-2"><Terminal className="w-4 h-4 text-emerald-600"/> Blockchain Node Terminal</h3>
+              <div className="glass-panel rounded-2xl border border-slate-100 bg-white">
+                <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-white">
+                  <h3 className="text-slate-800 font-mono flex items-center gap-2"><Terminal className="w-4 h-4 text-emerald-600"/> Blockchain Node Terminal</h3>
                   <div className="flex gap-2">
                     <div className="w-3 h-3 rounded-full bg-rose-500/80" />
                     <div className="w-3 h-3 rounded-full bg-amber-500/80" />
@@ -328,7 +328,7 @@ export default function DashboardPage() {
                 <div className="p-6 font-mono text-xs sm:text-sm overflow-x-auto">
                   <table className="w-full text-left whitespace-nowrap border-collapse">
                     <thead>
-                      <tr className="text-slate-500 mb-4 border-b border-slate-200">
+                      <tr className="text-slate-500 mb-4 border-b border-slate-100">
                         <th className="pb-3 font-medium">TIMESTAMP</th>
                         <th className="pb-3 font-medium">TX HASH</th>
                         <th className="pb-3 font-medium">ACTION</th>
@@ -338,7 +338,7 @@ export default function DashboardPage() {
                     </thead>
                     <tbody className="divide-y divide-white/5 text-slate-600">
                       {mockLogs.map((log, i) => (
-                        <tr key={i} className="hover:bg-slate-50">
+                        <tr key={i} className="hover:bg-slate-50/50">
                           <td className="py-3 pr-6 text-slate-500">{log.timestamp}</td>
                           <td className="py-3 pr-6 text-indigo-600">{log.tx}</td>
                           <td className="py-3 pr-6 text-sky-600">{log.action}</td>
@@ -358,29 +358,29 @@ export default function DashboardPage() {
             {activeTab === "Settings" && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-6">
-                  <div className="glass-panel rounded-2xl p-6 border border-slate-200">
-                    <h2 className="text-xl font-semibold text-slate-900 mb-6">Patient Profile</h2>
+                  <div className="glass-panel rounded-2xl p-6 border border-slate-100">
+                    <h2 className="text-xl font-semibold text-slate-800 mb-6">Patient Profile</h2>
                     <div className="grid grid-cols-2 gap-6">
                       <div>
                         <label className="block text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Full Name</label>
-                        <input type="text" defaultValue={userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1)} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:outline-none focus:border-sky-500 transition-colors" />
+                        <input type="text" defaultValue={userEmail.split('@')[0].charAt(0).toUpperCase() + userEmail.split('@')[0].slice(1)} className="w-full bg-white border border-slate-100 rounded-lg px-4 py-2.5 text-slate-800 focus:outline-none focus:border-sky-500 transition-colors" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Date of Birth</label>
-                        <input type="date" defaultValue="1990-05-15" className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:outline-none focus:border-sky-500 transition-colors" />
+                        <input type="date" defaultValue="1990-05-15" className="w-full bg-white border border-slate-100 rounded-lg px-4 py-2.5 text-slate-800 focus:outline-none focus:border-sky-500 transition-colors" />
                       </div>
                       <div className="col-span-2">
                         <label className="block text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Email Address</label>
-                        <input type="email" defaultValue={userEmail} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-slate-900 focus:outline-none focus:border-sky-500 transition-colors" />
+                        <input type="email" defaultValue={userEmail} className="w-full bg-white border border-slate-100 rounded-lg px-4 py-2.5 text-slate-800 focus:outline-none focus:border-sky-500 transition-colors" />
                       </div>
                     </div>
                     <div className="mt-8 flex justify-end">
-                      <button className="bg-sky-600 hover:bg-sky-600 text-slate-900 px-6 py-2 rounded-lg font-medium transition-colors" onClick={() => alert("Profile updated.")}>Save Changes</button>
+                      <button className="bg-sky-600 hover:bg-sky-600 text-slate-800 px-6 py-2 rounded-lg font-medium transition-colors" onClick={() => alert("Profile updated.")}>Save Changes</button>
                     </div>
                   </div>
 
-                  <div className="glass-panel rounded-2xl p-6 border border-slate-200 border-l-4 border-l-amber-500">
-                    <h2 className="text-xl font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                  <div className="glass-panel rounded-2xl p-6 border border-slate-100 border-l-4 border-l-amber-500">
+                    <h2 className="text-xl font-semibold text-slate-800 mb-2 flex items-center gap-2">
                       <AlertCircle className="w-5 h-5 text-amber-500"/> Danger Zone
                     </h2>
                     <p className="text-sm text-slate-500 mb-6">Permanently revoke all doctor access and self-destruct decrypted data caches from the client.</p>
@@ -389,24 +389,24 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="space-y-6">
-                  <div className="glass-panel rounded-2xl p-6 border border-slate-200">
-                    <h3 className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wider">Wallet Integration</h3>
-                    <div className="bg-white border border-slate-200 rounded-lg p-4 mb-4">
+                  <div className="glass-panel rounded-2xl p-6 border border-slate-100">
+                    <h3 className="text-sm font-semibold text-slate-800 mb-4 uppercase tracking-wider">Wallet Integration</h3>
+                    <div className="bg-white border border-slate-100 rounded-lg p-4 mb-4">
                       <Wallet className="w-6 h-6 text-sky-600 mb-2" />
                       <p className="text-xs text-slate-500 mb-1">Connected Address</p>
-                      <p className="text-sm font-mono text-slate-900 truncate">0x71C8F9...E49fA</p>
+                      <p className="text-sm font-mono text-slate-800 truncate">0x71C8F9...E49fA</p>
                     </div>
-                    <button onClick={() => alert("Wallet successfully disconnected.")} className="w-full bg-slate-100 hover:bg-white/10 text-slate-900 rounded-lg py-2 text-sm font-medium transition-colors">Disconnect Wallet</button>
+                    <button onClick={() => alert("Wallet successfully disconnected.")} className="w-full bg-slate-100 hover:bg-white/10 text-slate-800 rounded-lg py-2 text-sm font-medium transition-colors">Disconnect Wallet</button>
                   </div>
                   
-                  <div className="glass-panel rounded-2xl p-6 border border-slate-200">
-                    <h3 className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wider">Cryptography specs</h3>
+                  <div className="glass-panel rounded-2xl p-6 border border-slate-100">
+                    <h3 className="text-sm font-semibold text-slate-800 mb-4 uppercase tracking-wider">Cryptography specs</h3>
                     <ul className="space-y-3 text-sm">
-                      <li className="flex justify-between border-b border-slate-200 pb-2">
+                      <li className="flex justify-between border-b border-slate-100 pb-2">
                         <span className="text-slate-500">Algorithm</span>
                         <span className="text-sky-600 font-mono">Kyber-1024</span>
                       </li>
-                      <li className="flex justify-between border-b border-slate-200 pb-2">
+                      <li className="flex justify-between border-b border-slate-100 pb-2">
                         <span className="text-slate-500">Node</span>
                         <span className="text-indigo-600 font-mono">Infura/ETH</span>
                       </li>
