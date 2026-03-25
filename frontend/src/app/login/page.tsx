@@ -28,8 +28,8 @@ export default function LoginPage() {
         setEmail(result.user.email);
       }
       setStep("PHONE_PROMPT");
-    } catch (err: any) {
-      setError(err.message || "Google Sign-In Failed");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Network Error");
     } finally {
       setLoading(false);
     }
@@ -53,8 +53,8 @@ export default function LoginPage() {
         } else {
             setError(data.error || "Failed to send OTP.");
         }
-      } catch (err: any) {
-        setError(err.message || "Network Error");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Network Error");
       } finally {
         setLoading(false);
       }
@@ -80,8 +80,8 @@ export default function LoginPage() {
         } else {
             setError(data.error || "Failed to send OTP.");
         }
-      } catch (err: any) {
-        setError(err.message || "Network Error");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Network Error");
       } finally {
         setLoading(false);
       }
@@ -111,8 +111,8 @@ export default function LoginPage() {
         } else {
             setError(data.error || "Invalid OTP code.");
         }
-      } catch (err: any) {
-        setError(err.message || "Network Error");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Network Error");
       } finally {
         setLoading(false);
       }
@@ -203,7 +203,7 @@ export default function LoginPage() {
                 </button>
                 
                 <div className="mt-6 text-center text-sm text-slate-500">
-                  Don't have an Aegis Identity? <Link href="/signup" className="text-sky-400 hover:text-sky-300">Register</Link>
+                  Don&apos;t have an Aegis Identity? <Link href="/signup" className="text-sky-400 hover:text-sky-300">Register</Link>
                 </div>
               </motion.div>
             )}

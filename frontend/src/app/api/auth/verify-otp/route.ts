@@ -31,8 +31,9 @@ export async function POST(req: Request) {
     } else {
       return NextResponse.json({ error: "Invalid or expired verification code" }, { status: 400 });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Twilio Verify Error:", error);
-    return NextResponse.json({ error: error.message || "Failed to verify 2FA OTP." }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Failed to verify 2FA OTP.";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

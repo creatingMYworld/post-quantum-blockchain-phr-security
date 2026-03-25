@@ -40,7 +40,6 @@ const mockLogs = [
 export default function DashboardPage() {
   const [verifying, setVerifying] = useState(true);
   const [activeTab, setActiveTab] = useState("Overview");
-  const [showAll, setShowAll] = useState(false);
   const [userEmail, setUserEmail] = useState("patient9238@aegis-phr.io");
 
   React.useEffect(() => {
@@ -269,7 +268,7 @@ export default function DashboardPage() {
                   <div>
                     <h3 className="text-white font-medium mb-1">Smart Contract Access Control</h3>
                     <p className="text-sm text-indigo-200/70">
-                      Granting access delegates a post-quantum encrypted viewing key to the doctor's Ethereum public address.
+                      Granting access delegates a post-quantum encrypted viewing key to the doctor&apos;s Ethereum public address.
                       Revoking access destroys the capability on-chain immutably.
                     </p>
                   </div>

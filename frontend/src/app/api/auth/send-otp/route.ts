@@ -30,8 +30,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, status: verification.status });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Twilio Send Error:", error);
-    return NextResponse.json({ error: error.message || "Failed to send 2FA OTP." }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Failed to send 2FA OTP.";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

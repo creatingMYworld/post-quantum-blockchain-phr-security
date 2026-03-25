@@ -49,7 +49,7 @@ export default function LandingPage() {
           </motion.h1>
           
           <motion.p variants={item} className="mt-4 text-xl text-gray-400 max-w-3xl mx-auto mb-10 leading-relaxed">
-            The world's first Personal Health Record (PHR) platform utilizing lattice-based cryptography and decentralized ledger technology to secure medical data against quantum computing threats.
+            The world&apos;s first Personal Health Record (PHR) platform utilizing lattice-based cryptography and decentralized ledger technology to secure medical data against quantum computing threats.
           </motion.p>
           
           <motion.div variants={item} className="flex flex-col sm:flex-row gap-4 justify-center items-center">
