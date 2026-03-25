@@ -11,8 +11,9 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID?.trim()
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+// Initialize Firebase only if the API key exists (prevents crashes during CI/CD without .env.local)
+const app = !getApps().length && firebaseConfig.apiKey ? initializeApp(firebaseConfig) : (getApps().length ? getApp() : null);
+const auth = app ? getAuth(app) : (null as unknown as ReturnType<typeof getAuth>);
+const googleProvider = app ? new GoogleAuthProvider() : (null as unknown as GoogleAuthProvider);
 
 export { app, auth, googleProvider };
