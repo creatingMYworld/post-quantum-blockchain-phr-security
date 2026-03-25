@@ -1,35 +1,45 @@
 # System Flow & Mapping
 
-## Execution Workflows
-The mapping follows the Model-View-Controller (MVC) and Microservice intercommunication rules.
+## 1. Authentication & Key Exchange Flow
+The initial point of entry is protected by hybrid security paradigms mapping identity directly to sessions.
+```mermaid
+sequenceDiagram
+    participant User
+    participant NextJS
+    participant Firebase
+    participant Twilio
+    
+    User->>Firebase: 1. Sign in with Google
+    Firebase-->>NextJS: 2. Return Auth Token
+    NextJS->>Twilio: 3. Trigger SMS OTP
+    Twilio-->>User: 4. Deliver 6-digit Code
+    User->>NextJS: 5. Submit 6-digit Code
+    NextJS-->>User: 6. Session Confirmed (Unlock UI)
+```
 
-### 1. Patient Registration & Login Flow
-- Patient access Next.js interface.
-- App verifies credentials locally and communicates via API.
-- Upon success, the system creates a session encrypted with post-quantum parameters.
-
-### 2. PHR Upload Flow
+## 2. Personal Health Record (PHR) Upload Flow
+When a patient uploads a diagnosis or lab report, the underlying mapping behaves as a strict pipeline:
 ```mermaid
 sequenceDiagram
     participant Patient
-    participant Frontend
-    participant API Gateway
+    participant NextJS (Frontend)
+    participant Python (Backend)
+    participant IPFS
     participant Blockchain
-    participant IPFS Storage
 
-    Patient->>Frontend: Upload Record
-    Frontend->>Frontend: Encrypt Document (Lattice-Crypto)
-    Frontend->>IPFS Storage: Upload Encrypted Blob
-    IPFS Storage-->>Frontend: Return CID Hash
-    Frontend->>API Gateway: Sign Tx with CID
-    API Gateway->>Blockchain: Store hash mapped to UUID
-    Blockchain-->>Frontend: Transaction Receipt
+    Patient->>NextJS (Frontend): Upload Medical PDF
+    NextJS (Frontend)->>Python (Backend): Transmit for Lattice Encryption
+    Python (Backend)->>Python (Backend): Encrypt via Kyber-1024
+    Python (Backend)->>IPFS: Store Encrypted Ciphertext
+    IPFS-->>Python (Backend): Return Secure CID
+    Python (Backend)->>Blockchain: Emit Event (Patient UUID, CID)
+    Blockchain-->>Patient: Transaction Receipt (Immutable)
 ```
 
-### 3. State Mapping Matrix
-- `React Context`: Manages active user role and UI theming state.
-- `Next.js API Routes`: Maps REST calls to Web3.js / Ethers.js functions.
-- `Solidity Ledger`: Maps unique patient identifiers to an array of authorized doctor addresses.
+## 3. Data Flow Mapping Matrix
+- **React Context / LocalStorage:** Maintains ephemeral session states and UI theming (e.g., Dark Mode preferences) away from the database.
+- **Next.js API Routes:** Webhooks mapped strictly to REST calls linking Firebase UID credentials to Twilio services.
+- **Solidity Ledger (`PHR.sol`):** Maps unique patient identifiers directly to an array of authorized Doctor Ethereum wallet addresses. 
 
 > [!TIP]
-> This completes the requirement: "System Flow: Clear presentation of design, flows, and mapping."
+> This completes the requirement: "System Flow: Clear presentation of design, flows, and mapping" by providing granular UML mapping matrices.

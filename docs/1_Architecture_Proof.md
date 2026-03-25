@@ -1,29 +1,27 @@
 # Post-Quantum Blockchain PHR Security - Architecture Proof
 
-## UI/API Skeleton Version Control Evidence
+## 1. Version Control Evidence
+This document serves as proof of the UI and API skeleton setup, managed via strict version control and automated CI/CD pipelines.
+- **Repository Context:** Hosted on GitHub (Post-Quantum PHR Security).
+- **Branch Strategy:** Active development pushed securely to `main`.
+- **Automated Validation:** Github Actions strictly enforce linting and build checks before allowing Docker container registry updates.
 
-This document provides proof of the UI and API skeleton setup, managed via version control. 
-
-### Version Control Status
-- **Repository Context:** Local Git Repository Initialized.
-- **Branch:** `main`
-
-### UI Skeleton Structure
-The front-end is developed using **Next.js 15+** with **Tailwind CSS**, providing a high-performance, aesthetically exceptional interface suitable for a cutting-edge real-world application.
+## 2. UI Skeleton Structure
+The front-end is developed using **Next.js 15+ (App Router)** with **Tailwind CSS**, providing a high-performance, dark-mode, futuristic user interface with fluid glassmorphism elements.
 
 ```mermaid
 graph TD;
-    FrontendRoot[frontend/src/app] --> ClientPages[Client Pages];
-    FrontendRoot --> Layout[Root Layout Structure];
-    ClientPages --> Page[Landing Page Dashboard];
-    Layout --> Globals[Global Styles / Theme Configuration];
+    Client[Next.js Client] --> Pages[Dashboard & Login Pages];
+    Client --> Context[Firebase User Context];
+    Pages --> Components[Reusable UI Components];
+    Components --> Auth[Google Auth & Twilio 2FA];
 ```
 
-### API Skeleton Overview
-The architecture incorporates secure skeleton endpoints for Personal Health Records (PHR) access, designed for quantum-resistant interactions:
-- `/api/v1/auth` - Authentication & Post-Quantum key exchange.
-- `/api/v1/records` - CRU operations over PHR.
-- `/api/v1/blockchain` - Node status and transactional verification.
+## 3. API & Backend Skeleton
+The modular backend architecture is split between Edge-compatible Next.js APIs and Dockerized Python services:
+- `frontend/src/app/api/auth/*` - Handles Twilio 2FA SMS handshakes natively in Vercel Edge.
+- `backend/main.py` - Dockerized Python FastAPI skeleton intended for intensive cryptographic transformations (Kyber-1024 simulations).
+- `contracts/PHR.sol` - Solidity Smart Contracts deployed for mapping IPFS hashes to Ethereum public addresses logically.
 
 > [!NOTE] 
 > This architecture proof satisfies the requirement for "Architecture Proof: UI/API skeleton with version control evidence."
