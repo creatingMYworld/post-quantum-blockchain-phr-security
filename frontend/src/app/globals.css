@@ -29,7 +29,7 @@
     inset: -1px;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(to right, theme(colors.sky.400), theme(colors.purple.500));
+    background: linear-gradient(to right, var(--color-sky-400), var(--color-purple-500));
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -66,4 +66,14 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #475569; 
+}
+
+/* Hide Dev Indicators (Vercel Toolbar & Next.js Build Badge) */
+nextjs-portal,
+#nextjs-dev-indicator,
+[data-nextjs-dev-indicator],
+#vercel-toolbar,
+.vercel-toolbar,
+v-toolbar {
+  display: none !important;
 }

@@ -55,7 +55,7 @@ export default function Navbar() {
           
           <div className="hidden md:block">
             <Link 
-              href="/dashboard"
+              href="/login"
               className="relative inline-flex h-10 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-50"
             >
               <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
@@ -95,7 +95,7 @@ export default function Navbar() {
               </Link>
             ))}
             <Link 
-              href="/dashboard"
+              href="/login"
               className="block w-full text-center mt-4 bg-sky-600 hover:bg-sky-500 text-white font-medium py-2 rounded-md transition-colors"
             >
               Launch App

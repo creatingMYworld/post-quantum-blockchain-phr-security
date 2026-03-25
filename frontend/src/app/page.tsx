@@ -17,7 +17,7 @@ export default function LandingPage() {
 
   const item = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+    show: { opacity: 1, y: 0, transition: { duration: 0.8 } }
   };
 
   return (
@@ -53,7 +53,7 @@ export default function LandingPage() {
           </motion.p>
           
           <motion.div variants={item} className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link href="/dashboard" className="px-8 py-4 bg-white text-black font-semibold rounded-lg hover:bg-gray-200 transition-colors w-full sm:w-auto text-center shadow-[0_0_40px_rgba(255,255,255,0.3)]">
+            <Link href="/login" className="px-8 py-4 bg-white text-black font-semibold rounded-lg hover:bg-gray-200 transition-colors w-full sm:w-auto text-center shadow-[0_0_40px_rgba(255,255,255,0.3)]">
               Access Patient Portal
             </Link>
             <Link href="#" className="px-8 py-4 bg-transparent border border-white/20 text-white font-semibold rounded-lg hover:bg-white/5 transition-colors w-full sm:w-auto text-center relative overflow-hidden group">
