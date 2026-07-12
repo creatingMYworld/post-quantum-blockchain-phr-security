@@ -5,6 +5,7 @@ This Software Requirements Specification document details the architecture, cons
 
 ## 2. Functional Requirements
 1. **Multi-Factor Authentication (MFA):** The system shall enforce Google OAuth 2.0 followed immediately by Twilio SMS OTP verification for extreme identity validation.
+1. **Authentication:** The system shall support Firebase Authentication with Google Sign-In and email/password login only. No phone-based authentication or SMS OTP shall be used.
 2. **Access Delegation:** The system shall allow Patients to delegate access rights cryptographically to Doctors via Smart Contract updates.
 3. **Record Integrity:** All patient records shall be hashed. Only the hashes will be stored on-chain, while encrypted blobs are relegated to decentralized systems like IPFS.
 

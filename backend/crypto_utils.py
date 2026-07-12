@@ -1,8 +1,13 @@
 import os
 import base64
-from Cryptodome.Cipher import AES
-from Cryptodome.Random import get_random_bytes
-import oqs  # from liboqs-python
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+# try:
+#     import oqs  # from liboqs-python
+# except BaseException as e:
+#     print(f"Failed to import oqs: {e}")
+oqs = None
+
 
 class CryptoManager:
     """
@@ -14,6 +19,8 @@ class CryptoManager:
         self.kem_alg = kem_alg
         # Initialize a KEM object in pyoqs
         try:
+            if oqs is None:
+                raise RuntimeError("oqs is not installed correctly.")
             self.kem = oqs.KeyEncapsulation(self.kem_alg)
         except Exception as e:
             print(f"Failed to initialize Kyber KEM. Ensure liboqs is installed: {e}")

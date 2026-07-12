@@ -7,14 +7,11 @@ sequenceDiagram
     participant User
     participant NextJS
     participant Firebase
-    participant Twilio
     
     User->>Firebase: 1. Sign in with Google
     Firebase-->>NextJS: 2. Return Auth Token
-    NextJS->>Twilio: 3. Trigger SMS OTP
-    Twilio-->>User: 4. Deliver 6-digit Code
-    User->>NextJS: 5. Submit 6-digit Code
-    NextJS-->>User: 6. Session Confirmed (Unlock UI)
+    User->>NextJS: 3. Continue with email/password or Google session
+    NextJS-->>User: 4. Session Confirmed (Unlock UI)
 ```
 
 ## 2. Personal Health Record (PHR) Upload Flow
@@ -38,7 +35,7 @@ sequenceDiagram
 
 ## 3. Data Flow Mapping Matrix
 - **React Context / LocalStorage:** Maintains ephemeral session states and UI theming (e.g., Dark Mode preferences) away from the database.
-- **Next.js API Routes:** Webhooks mapped strictly to REST calls linking Firebase UID credentials to Twilio services.
+- **Next.js API Routes:** Frontend auth flows rely on Firebase Authentication helpers; no SMS or phone verification services are used.
 - **Solidity Ledger (`PHR.sol`):** Maps unique patient identifiers directly to an array of authorized Doctor Ethereum wallet addresses. 
 
 > [!TIP]

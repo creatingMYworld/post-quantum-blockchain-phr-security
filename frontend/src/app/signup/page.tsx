@@ -2,20 +2,48 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { ShieldCheck, Mail, Lock, User, Phone, ArrowRight } from "lucide-react";
+import { ShieldCheck, Mail, Lock, User, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { auth } from "../../lib/firebase";
+import { createUserWithEmailAndPassword, getIdToken } from "firebase/auth";
+import { exchangeFirebaseToken } from "../../lib/session";
 
 export default function SignupPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", confirm: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if(formData.password === formData.confirm) {
-        router.push("/login?registered=true");
-    } else {
-        alert("Passwords do not match.");
+    setError("");
+
+    if (formData.password !== formData.confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (!auth) {
+      setError("Firebase configuration is missing. Please add credentials to .env.local.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const result = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const idToken = await getIdToken(result.user, true);
+      const session = await exchangeFirebaseToken(idToken);
+      if (result.user.email) {
+        localStorage.setItem("aegis_user_email", result.user.email);
+      }
+      localStorage.setItem("aegis_role", session.role);
+      localStorage.setItem("aegis_access_token", session.access_token);
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create account.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -68,6 +96,7 @@ export default function SignupPage() {
           </div>
 
           <form onSubmit={handleSignup} className="space-y-5">
+            {error && <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-semibold">{error}</div>}
             <div>
               <label className={labelClass}>Authorized Name</label>
               <div className="relative group">
@@ -80,13 +109,6 @@ export default function SignupPage() {
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-[20px] h-[20px] text-teal-500 group-focus-within:text-cyan-500 group-focus-within:drop-shadow-sm transition-colors" />
                 <input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className={inputClass} placeholder="patient@aegis-phr.io" />
-              </div>
-            </div>
-            <div>
-              <label className={labelClass}>Dispatch Device (For 2FA)</label>
-              <div className="relative group">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-[20px] h-[20px] text-teal-500 group-focus-within:text-cyan-500 group-focus-within:drop-shadow-sm transition-colors" />
-                <input type="tel" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className={inputClass} placeholder="+1234567890" />
               </div>
             </div>
             <div>
@@ -104,9 +126,9 @@ export default function SignupPage() {
               </div>
             </div>
 
-            <button type="submit"
+            <button type="submit" disabled={loading}
               className="w-full mt-6 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white py-4 rounded-2xl font-extrabold transition-all flex items-center justify-center gap-2 shadow-[0_8px_16px_-4px_rgba(8,145,178,0.4)] hover:shadow-[0_12px_20px_-4px_rgba(8,145,178,0.5)] hover:-translate-y-1">
-              Initialize Keys <ArrowRight className="w-5 h-5" />
+              {loading ? "Creating Account..." : "Initialize Keys"} <ArrowRight className="w-5 h-5" />
             </button>
           </form>
 

@@ -14,12 +14,12 @@ graph TD;
     Client[Next.js Client] --> Pages[Dashboard & Login Pages];
     Client --> Context[Firebase User Context];
     Pages --> Components[Reusable UI Components];
-    Components --> Auth[Google Auth & Twilio 2FA];
+    Components --> Auth[Google Sign-In & Email Password Auth];
 ```
 
 ## 3. API & Backend Skeleton
 The modular backend architecture is split between Edge-compatible Next.js APIs and Dockerized Python services:
-- `frontend/src/app/api/auth/*` - Handles Twilio 2FA SMS handshakes natively in Vercel Edge.
+- `frontend/src/app/api/auth/*` - Handles Firebase-authenticated session flows and related frontend auth helpers.
 - `backend/main.py` - Dockerized Python FastAPI skeleton intended for intensive cryptographic transformations (Kyber-1024 simulations).
 - `contracts/PHR.sol` - Solidity Smart Contracts deployed for mapping IPFS hashes to Ethereum public addresses logically.
 

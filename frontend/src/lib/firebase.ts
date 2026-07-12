@@ -11,8 +11,10 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID?.trim()
 };
 
-// Initialize Firebase only if the API key exists (prevents crashes during CI/CD without .env.local)
-const app = !getApps().length && firebaseConfig.apiKey ? initializeApp(firebaseConfig) : (getApps().length ? getApp() : null);
+const isFirebaseConfigComplete = Object.values(firebaseConfig).every((value) => Boolean(value));
+
+// Initialize Firebase only if the full config exists (prevents crashes during CI/CD without .env.local)
+const app = !getApps().length && isFirebaseConfigComplete ? initializeApp(firebaseConfig) : (getApps().length ? getApp() : null);
 const auth = app ? getAuth(app) : (null as unknown as ReturnType<typeof getAuth>);
 const googleProvider = app ? new GoogleAuthProvider() : (null as unknown as GoogleAuthProvider);
 
