@@ -2,18 +2,30 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { roleModules, type AppRole, dashboardRouteMap } from "@/lib/iam";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { LogOut, ShieldCheck } from "lucide-react";
+import { logout } from "@/lib/session";
+import { useAuth } from "@/context/AuthContext";
 
 type Props = {
   role: AppRole;
   title: string;
   description: string;
+  children?: React.ReactNode;
 };
 
-export default function RoleDashboard({ role, title, description }: Props) {
-  const modules = roleModules[role];
+export default function RoleDashboard({ role, title, description, children }: Props) {
+  const modules = roleModules[role] || [];
+  const router = useRouter();
+  const { clearSession } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    clearSession();
+    router.push("/login");
+  };
 
   return (
     <ProtectedRoute route={dashboardRouteMap[role]}>
@@ -40,10 +52,10 @@ export default function RoleDashboard({ role, title, description }: Props) {
                   ))}
                 </nav>
 
-                <Link href="/login" className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+                <button onClick={handleLogout} className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 hover:bg-rose-100 transition-colors">
                   <LogOut className="h-4 w-4" />
                   Logout
-                </Link>
+                </button>
               </aside>
 
               <div className="p-8 sm:p-10">
@@ -58,14 +70,18 @@ export default function RoleDashboard({ role, title, description }: Props) {
                   </Link>
                 </div>
 
-                <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {modules.map((module) => (
-                    <article key={module} className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
-                      <p className="text-sm font-black text-teal-700">{module}</p>
-                      <p className="mt-2 text-sm text-slate-500">Authorized under role-based policy and audit logging.</p>
-                    </article>
-                  ))}
-                </div>
+                {!children && (
+                  <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {modules.map((module) => (
+                      <article key={module} className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+                        <p className="text-sm font-black text-teal-700">{module}</p>
+                        <p className="mt-2 text-sm text-slate-500">Authorized under role-based policy and audit logging.</p>
+                      </article>
+                    ))}
+                  </div>
+                )}
+                
+                {children}
               </div>
             </div>
           </div>

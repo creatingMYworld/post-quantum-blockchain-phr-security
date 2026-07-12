@@ -55,14 +55,20 @@ export default function Navbar() {
             </div>
           </div>
           
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-6">
+            <Link 
+              href="/signup"
+              className="text-slate-600 hover:text-cyan-600 font-medium text-sm transition-colors"
+            >
+              Sign Up
+            </Link>
             <Link 
               href="/login"
               className="relative inline-flex h-10 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-white"
             >
               <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#a5f3fc_0%,#0891b2_50%,#a5f3fc_100%)]" />
               <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-white px-6 py-1 text-sm font-medium text-cyan-700 backdrop-blur-3xl transition-all hover:bg-cyan-50">
-                Launch App
+                Login
               </span>
             </Link>
           </div>
@@ -97,10 +103,16 @@ export default function Navbar() {
               </Link>
             ))}
             <Link 
-              href="/login"
-              className="block w-full text-center mt-4 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-2 rounded-md transition-colors"
+              href="/signup"
+              className="block w-full text-center mt-4 border border-cyan-200 text-cyan-700 font-medium py-2 rounded-md transition-colors"
             >
-              Launch App
+              Sign Up
+            </Link>
+            <Link 
+              href="/login"
+              className="block w-full text-center mt-2 bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-2 rounded-md transition-colors"
+            >
+              Login
             </Link>
           </div>
         </motion.div>

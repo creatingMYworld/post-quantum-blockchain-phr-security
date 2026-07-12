@@ -1,17 +1,24 @@
-from __future__ import annotations
-
-from datetime import datetime, timedelta, timezone
-from uuid import uuid4
-
-from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi import FastAPI, Depends, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime, timezone
+import psycopg
+from psycopg.rows import dict_row
 
-from app.crypto_service import KeyMaterial, key_service
-from app.rbac import get_permissions_for_role, normalize_role, ROLE_DEFINITIONS
-from app.schemas import AuditLogRequest, ConsentActionRequest, FirebaseLoginRequest, SessionResponse, UploadRecordRequest
-from app.security import AuthContext, create_backend_jwt, get_current_session, require_permission, require_role, verify_firebase_id_token
+from app.schemas import (
+    RegistrationRequest, LoginRequest, RegistrationResponse, LoginResponse, 
+    PendingRegistration, AdminActionRequest, AdminActionResponse
+)
+from app.database import get_db, init_db
+from app.security import (
+    hash_password, verify_password, encrypt_data, decrypt_data,
+    create_session_token, get_current_session, require_role, require_permission
+)
+from app.crypto_service import generate_mlkem_keypair, generate_mldsa_keypair
+from app.email_service import send_approval_email, send_rejection_email, send_admin_notification
+from app.user_id_service import generate_user_id
+from app.rbac import get_permissions_for_role, normalize_role
 
-app = FastAPI(title="Enhanced PHR IAM API", version="2.0.0")
+app = FastAPI(title="PQC Hospital IAM API", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,164 +28,229 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+def on_startup():
+    init_db()
 
-USER_DIRECTORY = {
-    "patient@aegis-phr.io": {"role": "Patient", "full_name": "Patient Demo"},
-    "doctor@aegis-phr.io": {"role": "Doctor", "full_name": "Doctor Demo"},
-    "lab@aegis-phr.io": {"role": "Laboratory Staff", "full_name": "Laboratory Demo"},
-    "admin@aegis-phr.io": {"role": "Administrator", "full_name": "Administrator Demo"},
-    "security@aegis-phr.io": {"role": "AI Security Analyst", "full_name": "Security Analyst Demo"},
-}
+@app.get("/api/health")
+def health_check():
+    return {"status": "ok"}
 
-USER_KEYS: dict[str, KeyMaterial] = {}
-SESSIONS: dict[str, dict[str, str]] = {}
-AUDIT_LOGS: list[dict[str, object]] = []
-CONSENTS: dict[tuple[str, str, str], dict[str, object]] = {}
-MEDICAL_RECORDS: list[dict[str, object]] = []
-USER_IDS_BY_EMAIL: dict[str, str] = {}
+@app.post("/api/register", response_model=RegistrationResponse)
+def register(request: RegistrationRequest):
+    if request.password != request.confirm_password:
+        raise HTTPException(status_code=400, detail="Passwords do not match")
+    
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            # Check if email exists
+            cur.execute("SELECT id FROM Users WHERE email = %s", (request.email,))
+            if cur.fetchone():
+                raise HTTPException(status_code=400, detail="Email already registered")
+            
+            # Hash password and encrypt sensitive fields
+            pwd_hash = hash_password(request.password)
+            dob_enc = encrypt_data(request.date_of_birth)
+            blood_group_enc = encrypt_data(request.blood_group) if request.blood_group else None
+            
+            # Insert into Users
+            cur.execute("""
+                INSERT INTO Users (full_name, email, password_hash, role, gender, date_of_birth_encrypted, blood_group_encrypted, specialization, status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'Pending')
+                RETURNING id
+            """, (
+                request.full_name, request.email, pwd_hash, request.role, request.gender,
+                dob_enc, blood_group_enc, request.specialization
+            ))
+            new_id = cur.fetchone()[0]
+            conn.commit()
+            
+    # Notify admin
+    send_admin_notification({
+        "full_name": request.full_name,
+        "email": request.email,
+        "role": request.role
+    })
+            
+    return {"message": "Registration submitted successfully. Pending admin approval."}
 
+@app.post("/api/login", response_model=LoginResponse)
+def login(request: LoginRequest, response: Response):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT * FROM Users WHERE user_id = %s", (request.user_id,))
+            user = cur.fetchone()
+            
+            if not user:
+                raise HTTPException(status_code=401, detail="Invalid User ID or Password.")
+            
+            if user["status"] == "Pending":
+                raise HTTPException(status_code=403, detail="Your registration is currently under administrator verification.")
+            if user["status"] == "Rejected":
+                raise HTTPException(status_code=403, detail="Your registration request was not approved.")
+                
+            if not verify_password(request.password, user["password_hash"]):
+                # Log failed attempt
+                cur.execute("INSERT INTO AuthLogs (user_id, public_user_id, action) VALUES (%s, %s, %s)", 
+                            (user["id"], user["user_id"], "LOGIN_FAILED"))
+                conn.commit()
+                raise HTTPException(status_code=401, detail="Invalid User ID or Password.")
+            
+            # Create session token
+            token_payload = {
+                "user_id": str(user["id"]),
+                "public_user_id": user["user_id"],
+                "role": user["role"],
+                "email": user["email"],
+                "full_name": user["full_name"]
+            }
+            token, expires_at = create_session_token(token_payload)
+            
+            # Store session
+            cur.execute("""
+                INSERT INTO Sessions (user_id, token_hash, role, expires_at)
+                VALUES (%s, %s, %s, %s)
+            """, (user["id"], hash_password(token), user["role"], expires_at))
+            
+            # Log successful login
+            cur.execute("INSERT INTO AuthLogs (user_id, public_user_id, action) VALUES (%s, %s, %s)", 
+                        (user["id"], user["user_id"], "LOGIN_SUCCESS"))
+            conn.commit()
+            
+    response.set_cookie("aegis_access_token", token, httponly=True, secure=False, samesite="lax", path="/")
+    
+    permissions = list(get_permissions_for_role(user["role"]))
+    
+    return {
+        "access_token": token,
+        "user_id": str(user["id"]),
+        "public_user_id": user["user_id"],
+        "email": user["email"],
+        "full_name": user["full_name"],
+        "role": user["role"],
+        "permissions": permissions
+    }
 
-def _lookup_user(email: str, firebase_uid: str) -> dict[str, str]:
-    profile = USER_DIRECTORY.get(email.lower())
-    if profile is None:
-        inferred_role = "Patient"
-        profile = {"role": inferred_role, "full_name": email.split("@")[0].replace(".", " ").title()}
-        USER_DIRECTORY[email.lower()] = profile
-    user_id = USER_IDS_BY_EMAIL.get(email.lower())
-    if user_id is None:
-        user_id = str(uuid4())
-        USER_IDS_BY_EMAIL[email.lower()] = user_id
-    return {"firebase_uid": firebase_uid, "email": email, "user_id": user_id, **profile}
-
-
-def _build_session_response(user: dict[str, str], key_material: KeyMaterial, session_jti: str) -> SessionResponse:
-    permissions = sorted(get_permissions_for_role(user["role"]))
-    access_token, expires_at = create_backend_jwt(
-        {
-            "user_id": user["user_id"],
-            "firebase_uid": user["firebase_uid"],
-            "email": user["email"],
-            "full_name": user["full_name"],
-            "role": user["role"],
-            "permissions": permissions,
-            "key_version": key_material.key_version,
-            "key_status": key_material.key_status,
-            "session_jti": session_jti,
-        }
-    )
-    refresh_token, _ = create_backend_jwt({"session_jti": session_jti, "user_id": user["user_id"]}, minutes=60 * 24 * 14)
-    return SessionResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        expires_in=int((expires_at - datetime.now(timezone.utc)).total_seconds()),
-        user_id=user["user_id"],
-        firebase_uid=user["firebase_uid"],
-        email=user["email"],
-        full_name=user["full_name"],
-        role=user["role"],
-        permissions=permissions,
-        key_version=key_material.key_version,
-        key_status=key_material.key_status,
-    )
-
-
-@app.post("/api/auth/firebase/session", response_model=SessionResponse)
-async def firebase_session(request: FirebaseLoginRequest):
-    firebase_claims = verify_firebase_id_token(request.id_token)
-    email = (firebase_claims.get("email") or "").strip().lower()
-    if not email:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Firebase token does not include an email address.")
-
-    user_record = _lookup_user(email=email, firebase_uid=str(firebase_claims["uid"]))
-    user_id = user_record["user_id"]
-    existing_key = USER_KEYS.get(user_id)
-    key_material = key_service.generate_or_retrieve_keypair(user_id=user_id, existing=existing_key)
-    USER_KEYS[user_id] = key_material
-    session_jti = str(uuid4())
-    SESSIONS[session_jti] = {"user_id": user_id, "firebase_uid": user_record["firebase_uid"]}
-
-    response = _build_session_response(user_record, key_material, session_jti)
-    AUDIT_LOGS.append({"user_id": user_id, "action": "LOGIN", "role": user_record["role"], "success": True, "created_at": datetime.now(timezone.utc).isoformat()})
-    http_response = Response(content=response.model_dump_json(), media_type="application/json")
-    http_response.set_cookie("aegis_access_token", response.access_token, httponly=True, samesite="lax", secure=False, max_age=response.expires_in, path="/")
-    http_response.set_cookie("aegis_refresh_token", response.refresh_token, httponly=True, samesite="lax", secure=False, max_age=60 * 60 * 24 * 14, path="/")
-    http_response.set_cookie("aegis_role", response.role, httponly=False, samesite="lax", secure=False, max_age=response.expires_in, path="/")
-    http_response.set_cookie("aegis_user_email", response.email, httponly=False, samesite="lax", secure=False, max_age=response.expires_in, path="/")
-    return http_response
-
+@app.post("/api/logout")
+def logout(response: Response, session: dict = Depends(get_current_session)):
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("INSERT INTO AuthLogs (user_id, action) VALUES (%s, %s)", (session["user_id"], "LOGOUT"))
+            conn.commit()
+            
+    response.delete_cookie("aegis_access_token", path="/")
+    return {"status": "success"}
 
 @app.get("/api/auth/me")
-async def me(session: AuthContext = Depends(get_current_session)):
-    return session.to_dict()
+def get_me(session: dict = Depends(get_current_session)):
+    return session
 
+@app.get("/api/admin/registrations/pending")
+def get_pending_registrations(session: dict = Depends(require_role("Administrator"))):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT * FROM Users WHERE status = 'Pending' ORDER BY created_at DESC")
+            rows = cur.fetchall()
+            
+    results = []
+    for row in rows:
+        results.append({
+            "id": str(row["id"]),
+            "full_name": row["full_name"],
+            "email": row["email"],
+            "role": row["role"],
+            "gender": row["gender"],
+            "date_of_birth": decrypt_data(row["date_of_birth_encrypted"]),
+            "blood_group": decrypt_data(row["blood_group_encrypted"]) if row["blood_group_encrypted"] else None,
+            "specialization": row["specialization"],
+            "created_at": row["created_at"],
+            "status": row["status"]
+        })
+    return results
 
-@app.post("/api/auth/logout")
-async def logout(session: AuthContext = Depends(get_current_session)):
-    SESSIONS.pop(session.session_jti, None)
-    USER_KEYS.pop(session.user_id, None)
-    AUDIT_LOGS.append({"user_id": session.user_id, "action": "LOGOUT", "role": session.role, "success": True, "created_at": datetime.now(timezone.utc).isoformat()})
-    response = Response(content='{"status":"success"}', media_type="application/json")
-    response.delete_cookie("aegis_access_token", path="/")
-    response.delete_cookie("aegis_refresh_token", path="/")
-    response.delete_cookie("aegis_role", path="/")
-    response.delete_cookie("aegis_user_email", path="/")
-    return response
+@app.get("/api/admin/registrations")
+def get_all_registrations(session: dict = Depends(require_role("Administrator"))):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT * FROM Users ORDER BY created_at DESC")
+            rows = cur.fetchall()
+            
+    results = []
+    for row in rows:
+        results.append({
+            "id": str(row["id"]),
+            "full_name": row["full_name"],
+            "email": row["email"],
+            "role": row["role"],
+            "gender": row["gender"],
+            "date_of_birth": decrypt_data(row["date_of_birth_encrypted"]),
+            "blood_group": decrypt_data(row["blood_group_encrypted"]) if row["blood_group_encrypted"] else None,
+            "specialization": row["specialization"],
+            "created_at": row["created_at"],
+            "status": row["status"]
+        })
+    return results
 
+@app.post("/api/admin/registrations/{user_uuid}/approve", response_model=AdminActionResponse)
+def approve_registration(user_uuid: str, session: dict = Depends(require_role("Administrator"))):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT * FROM Users WHERE id = %s", (user_uuid,))
+            user = cur.fetchone()
+            if not user:
+                raise HTTPException(status_code=404, detail="Registration not found")
+            
+            if user["status"] != "Pending":
+                raise HTTPException(status_code=400, detail="Registration is not pending")
+                
+            new_user_id = generate_user_id(user["role"])
+            
+            kem_pub, kem_priv = generate_mlkem_keypair()
+            dsa_pub, dsa_priv = generate_mldsa_keypair()
+            
+            cur.execute("""
+                UPDATE Users 
+                SET status = 'Approved', user_id = %s, approved_at = CURRENT_TIMESTAMP, approved_by = %s,
+                    mlkem_public_key = %s, mlkem_private_key_encrypted = %s,
+                    mldsa_public_key = %s, mldsa_private_key_encrypted = %s
+                WHERE id = %s
+            """, (
+                new_user_id, session["user_id"],
+                kem_pub, kem_priv, dsa_pub, dsa_priv,
+                user_uuid
+            ))
+            conn.commit()
+            
+    send_approval_email(user["email"], user["full_name"], new_user_id)
+    
+    return {"message": "Registration approved successfully", "user_id": new_user_id}
+
+@app.post("/api/admin/registrations/{user_uuid}/reject", response_model=AdminActionResponse)
+def reject_registration(user_uuid: str, session: dict = Depends(require_role("Administrator"))):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT * FROM Users WHERE id = %s", (user_uuid,))
+            user = cur.fetchone()
+            if not user:
+                raise HTTPException(status_code=404, detail="Registration not found")
+            
+            if user["status"] != "Pending":
+                raise HTTPException(status_code=400, detail="Registration is not pending")
+                
+            cur.execute("UPDATE Users SET status = 'Rejected' WHERE id = %s", (user_uuid,))
+            conn.commit()
+            
+    send_rejection_email(user["email"], user["full_name"])
+    
+    return {"message": "Registration rejected"}
 
 @app.get("/api/dashboard/{dashboard_role}")
-async def dashboard_gate(dashboard_role: str, session: AuthContext = Depends(get_current_session)):
-    allowed_role = normalize_role(session.role)
-    if dashboard_role.lower() not in {allowed_role.lower().replace(" ", ""), allowed_role.lower().replace(" ", "-") }:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
-    return {"status": "success", "dashboard_role": dashboard_role, "session": session.to_dict()}
-
-
-@app.post("/api/records/upload")
-async def upload_record(request: UploadRecordRequest, session: AuthContext = Depends(require_permission("records:upload:own"))):
-    MEDICAL_RECORDS.append(request.model_dump() | {"uploaded_by": session.user_id, "created_at": datetime.now(timezone.utc).isoformat()})
-    AUDIT_LOGS.append({"user_id": session.user_id, "action": "MEDICAL_RECORD_UPLOAD", "resource_id": request.storage_reference, "success": True, "created_at": datetime.now(timezone.utc).isoformat()})
-    return {"status": "success", "record": request.model_dump()}
-
-
-@app.post("/api/consent/grant")
-async def grant_consent(request: ConsentActionRequest, session: AuthContext = Depends(require_permission("consent:grant"))):
-    CONSENTS[(request.patient_id, request.subject_user_id, request.subject_role)] = request.model_dump() | {"granted_by": session.user_id}
-    AUDIT_LOGS.append({"user_id": session.user_id, "action": "CONSENT_GRANTED", "resource_id": request.subject_user_id, "success": True, "created_at": datetime.now(timezone.utc).isoformat()})
-    return {"status": "success", "consent": request.model_dump()}
-
-
-@app.post("/api/consent/revoke")
-async def revoke_consent(request: ConsentActionRequest, session: AuthContext = Depends(require_permission("consent:revoke"))):
-    key = (request.patient_id, request.subject_user_id, request.subject_role)
-    if key in CONSENTS:
-        CONSENTS[key]["status"] = "Revoked"
-    AUDIT_LOGS.append({"user_id": session.user_id, "action": "CONSENT_REVOKED", "resource_id": request.subject_user_id, "success": True, "created_at": datetime.now(timezone.utc).isoformat()})
-    return {"status": "success"}
-
-
-@app.post("/api/audit/log")
-async def audit_log(request: AuditLogRequest, session: AuthContext = Depends(get_current_session)):
-    AUDIT_LOGS.append(request.model_dump() | {"user_id": session.user_id, "role": session.role, "created_at": datetime.now(timezone.utc).isoformat()})
-    return {"status": "success"}
-
-
-@app.post("/api/keys/rotate")
-async def rotate_keys(session: AuthContext = Depends(require_permission("keys:rotate"))):
-    existing = USER_KEYS.get(session.user_id)
-    if existing is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No key pair found for user.")
-    rotated = key_service.rotate_keypair(existing)
-    USER_KEYS[session.user_id] = rotated
-    AUDIT_LOGS.append({"user_id": session.user_id, "action": "KEY_ROTATION", "role": session.role, "success": True, "created_at": datetime.now(timezone.utc).isoformat()})
-    return {"status": "success", "key_version": rotated.key_version, "key_status": rotated.key_status}
-
-
-@app.get("/api/roles")
-async def list_roles():
-    return {"roles": list(ROLE_DEFINITIONS.keys()), "future_roles": ["Insurance Provider", "Pharmacist", "Hospital Receptionist", "Researcher"]}
-
+def dashboard_gate(dashboard_role: str, session: dict = Depends(get_current_session)):
+    allowed_role = normalize_role(session["role"])
+    if dashboard_role.lower() not in {allowed_role.lower().replace(" ", ""), allowed_role.lower().replace(" ", "-")}:
+        raise HTTPException(status_code=403, detail="Forbidden.")
+    return {"status": "success", "dashboard_role": dashboard_role, "session": session}
 
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=8000)

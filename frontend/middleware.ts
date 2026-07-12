@@ -17,7 +17,7 @@ export function middleware(request: NextRequest) {
   const role = readCookie(request, "aegis_role");
 
   if (!accessToken || !role) {
-    return new NextResponse("Forbidden", { status: 403 });
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   const requestedRole = pathname.split("/")[2];
@@ -26,7 +26,7 @@ export function middleware(request: NextRequest) {
     const normalizedRole = role.toLowerCase().replace(/\s+/g, "");
     const normalizedRoleHyphen = role.toLowerCase().replace(/\s+/g, "-");
     if (normalizedRequested !== normalizedRole && normalizedRequested !== normalizedRoleHyphen) {
-      return new NextResponse("Forbidden", { status: 403 });
+      return NextResponse.redirect(new URL(`/dashboard/${normalizedRoleHyphen}`, request.url));
     }
   }
 

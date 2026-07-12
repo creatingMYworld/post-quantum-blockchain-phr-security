@@ -117,16 +117,16 @@ export default function LandingPage() {
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
             <Link
-              href="/login"
+              href="/signup"
               className="px-9 py-4 bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold rounded-2xl hover:from-cyan-600 hover:to-teal-600 transition-all w-full sm:w-auto text-center glow-teal shadow-lg hover:-translate-y-1 hover:scale-105"
             >
-              Access Patient Portal
+              Access Patient Portal (Sign Up)
             </Link>
             <Link
-              href="#"
+              href="/login"
               className="px-9 py-4 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-2xl hover:border-cyan-300 hover:text-cyan-700 hover:bg-cyan-50 hover:-translate-y-1 hover:scale-105 transition-all w-full sm:w-auto text-center shadow-sm"
             >
-              Read The Whitepaper
+              Login
             </Link>
           </motion.div>
         </motion.div>

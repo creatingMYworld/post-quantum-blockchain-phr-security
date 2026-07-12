@@ -4,8 +4,9 @@ pydantic
 pycryptodome
 liboqs-python
 psycopg[binary]
+psycopg_pool
 python-dotenv
 requests
-firebase-admin
+argon2-cffi
 PyJWT
 pytest

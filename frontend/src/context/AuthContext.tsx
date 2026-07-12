@@ -7,9 +7,9 @@ type AuthState = {
   isAuthenticated: boolean;
   role: AppRole | null;
   permissions: string[];
-  userEmail: string | null;
+  userId: string | null;
   accessToken: string | null;
-  setSession: (input: { role: AppRole | null; permissions?: string[]; userEmail?: string | null; accessToken?: string | null }) => void;
+  setSession: (input: { role: AppRole | null; permissions?: string[]; userId?: string | null; accessToken?: string | null }) => void;
   clearSession: () => void;
 };
 
@@ -31,11 +31,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return null;
   });
   const [permissions, setPermissions] = useState<string[]>(() => (role ? rolePermissions[role] : []));
-  const [userEmail, setUserEmail] = useState<string | null>(() => {
-    const cookieEmail = readCookie("aegis_user_email");
-    if (cookieEmail) return cookieEmail;
+  const [userId, setUserId] = useState<string | null>(() => {
+    const cookieUserId = readCookie("aegis_user_id");
+    if (cookieUserId) return cookieUserId;
     if (typeof window !== "undefined") {
-      return localStorage.getItem("aegis_user_email");
+      return localStorage.getItem("aegis_user_id");
     }
     return null;
   });
@@ -52,21 +52,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: Boolean(role && accessToken),
     role,
     permissions,
-    userEmail,
+    userId,
     accessToken,
-    setSession: ({ role: nextRole, permissions: nextPermissions, userEmail: nextUserEmail, accessToken: nextToken }) => {
+    setSession: ({ role: nextRole, permissions: nextPermissions, userId: nextUserId, accessToken: nextToken }) => {
       setRole(nextRole);
       setPermissions(nextPermissions ?? (nextRole ? rolePermissions[nextRole] : []));
-      setUserEmail(nextUserEmail ?? null);
+      setUserId(nextUserId ?? null);
       setAccessToken(nextToken ?? null);
     },
     clearSession: () => {
       setRole(null);
       setPermissions([]);
-      setUserEmail(null);
+      setUserId(null);
       setAccessToken(null);
     },
-  }), [accessToken, permissions, role, userEmail]);
+  }), [accessToken, permissions, role, userId]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

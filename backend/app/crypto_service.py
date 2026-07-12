@@ -1,38 +1,50 @@
-from __future__ import annotations
+import logging
+import base64
+from app.security import encrypt_data
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from secrets import token_hex
+logger = logging.getLogger(__name__)
 
+try:
+    import oqs
+    OQS_AVAILABLE = True
+except ImportError:
+    OQS_AVAILABLE = False
+    logger.warning("liboqs-python not available. Falling back to mock PQC keys.")
 
-@dataclass(slots=True)
-class KeyMaterial:
-    public_key: str
-    encrypted_private_key: str
-    key_version: int
-    key_status: str
-    algorithm: str = "ML-KEM-768"
-    created_at: datetime = datetime.now(timezone.utc)
+def generate_mlkem_keypair() -> tuple[str, str]:
+    """Generates ML-KEM (Kyber-768) keypair. Returns (public_key, encrypted_private_key)"""
+    if OQS_AVAILABLE:
+        try:
+            with oqs.KeyEncapsulation("Kyber768") as kem:
+                public_key_bytes = kem.generate_keypair()
+                private_key_bytes = kem.export_secret_key()
+                public_key = base64.b64encode(public_key_bytes).decode('utf-8')
+                private_key = base64.b64encode(private_key_bytes).decode('utf-8')
+                return public_key, encrypt_data(private_key)
+        except Exception as e:
+            logger.error(f"Error generating ML-KEM key: {e}")
+            
+    # Mock fallback
+    import secrets
+    public_key = f"mock_mlkem_pub_{secrets.token_hex(32)}"
+    private_key = f"mock_mlkem_priv_{secrets.token_hex(64)}"
+    return public_key, encrypt_data(private_key)
 
-
-class KeyManagementService:
-    def generate_or_retrieve_keypair(self, user_id: str, existing: KeyMaterial | None = None) -> KeyMaterial:
-        if existing is not None:
-            return existing
-        return KeyMaterial(
-            public_key=f"pub_{token_hex(32)}",
-            encrypted_private_key=f"enc_{token_hex(64)}",
-            key_version=1,
-            key_status="Active",
-        )
-
-    def rotate_keypair(self, existing: KeyMaterial) -> KeyMaterial:
-        return KeyMaterial(
-            public_key=f"pub_{token_hex(32)}",
-            encrypted_private_key=f"enc_{token_hex(64)}",
-            key_version=existing.key_version + 1,
-            key_status="Active",
-        )
-
-
-key_service = KeyManagementService()
+def generate_mldsa_keypair() -> tuple[str, str]:
+    """Generates ML-DSA (Dilithium3) keypair. Returns (public_key, encrypted_private_key)"""
+    if OQS_AVAILABLE:
+        try:
+            with oqs.Signature("Dilithium3") as sig:
+                public_key_bytes = sig.generate_keypair()
+                private_key_bytes = sig.export_secret_key()
+                public_key = base64.b64encode(public_key_bytes).decode('utf-8')
+                private_key = base64.b64encode(private_key_bytes).decode('utf-8')
+                return public_key, encrypt_data(private_key)
+        except Exception as e:
+            logger.error(f"Error generating ML-DSA key: {e}")
+            
+    # Mock fallback
+    import secrets
+    public_key = f"mock_mldsa_pub_{secrets.token_hex(32)}"
+    private_key = f"mock_mldsa_priv_{secrets.token_hex(64)}"
+    return public_key, encrypt_data(private_key)

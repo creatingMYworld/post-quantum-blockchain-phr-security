@@ -1,32 +1,32 @@
 export type AppRole =
   | "Patient"
   | "Doctor"
-  | "Laboratory Staff"
-  | "Administrator"
-  | "AI Security Analyst";
+  | "Nurse"
+  | "Lab Technician"
+  | "Administrator";
 
 export const dashboardRouteMap: Record<AppRole, string> = {
   Patient: "/dashboard/patient",
   Doctor: "/dashboard/doctor",
-  "Laboratory Staff": "/dashboard/laboratory",
+  Nurse: "/dashboard/nurse",
+  "Lab Technician": "/dashboard/lab-technician",
   Administrator: "/dashboard/admin",
-  "AI Security Analyst": "/dashboard/security",
 };
 
 export const roleModules: Record<AppRole, string[]> = {
   Patient: ["My Records", "Consent", "Emergency Access", "Notifications"],
   Doctor: ["Assigned Patients", "Record Review", "Diagnosis Upload", "Emergency Request"],
-  "Laboratory Staff": ["Assigned Samples", "Lab Report Upload", "Queue Management"],
-  Administrator: ["User Management", "Role Assignment", "Policy Configuration", "Audit Logs"],
-  "AI Security Analyst": ["Anomaly Detection", "Explainability", "Federated Learning", "Audit Oversight"],
+  Nurse: ["Assigned Patients", "Vitals Upload", "Care Plans"],
+  "Lab Technician": ["Assigned Samples", "Lab Report Upload", "Queue Management"],
+  Administrator: ["User Management", "Role Assignment", "Registration Approvals", "Audit Logs"],
 };
 
 export const rolePermissions: Record<AppRole, string[]> = {
   Patient: ["records:view:own", "records:upload:own", "consent:grant", "consent:revoke", "history:view:own", "emergency:view:own", "notifications:receive"],
   Doctor: ["patients:search", "records:view:approved", "records:create:diagnosis", "records:upload:reports", "access:request", "access:emergency", "history:view:own", "notifications:receive"],
-  "Laboratory Staff": ["patients:search:assigned", "records:upload:lab", "reports:view:own", "reports:update:status", "notifications:receive"],
-  Administrator: ["users:create", "users:delete", "roles:assign", "hospitals:manage", "settings:configure", "audit:view", "alerts:view", "reports:generate", "users:suspend"],
-  "AI Security Analyst": ["anomaly:view", "analytics:view", "federated:view", "explainability:view", "security:monitor"],
+  Nurse: ["patients:search", "records:view:approved", "records:upload:vitals", "notifications:receive"],
+  "Lab Technician": ["patients:search:assigned", "records:upload:lab", "reports:view:own", "reports:update:status", "notifications:receive"],
+  Administrator: ["users:create", "users:delete", "roles:assign", "hospitals:manage", "settings:configure", "audit:view", "registrations:manage", "users:suspend"],
 };
 
 export function normalizeRole(role: string | null | undefined): AppRole | null {
