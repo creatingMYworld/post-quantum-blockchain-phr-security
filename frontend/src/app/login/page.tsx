@@ -6,6 +6,7 @@ import { ShieldCheck, User, Lock, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { login, setAuthCookies } from "../../lib/session";
+import { normalizeRole, dashboardRouteMap } from "../../lib/iam";
 import { useAuth } from "../../context/AuthContext";
 
 export default function LoginPage() {
@@ -30,8 +31,9 @@ export default function LoginPage() {
           userId: userId,
           accessToken: result.access_token,
         });
-        const normalizedRoleHyphen = result.role.toLowerCase().replace(/\s+/g, "-");
-        router.push(`/dashboard/${normalizedRoleHyphen}`);
+        const appRole = normalizeRole(result.role);
+        const dashPath = appRole ? dashboardRouteMap[appRole] : "/login";
+        router.push(dashPath);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Network Error");
       } finally {

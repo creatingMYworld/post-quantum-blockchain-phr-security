@@ -134,8 +134,52 @@ CREATE TABLE IF NOT EXISTS Notifications (
     Created_At TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Add Disabled status to enum
+DO $$ BEGIN
+    ALTER TYPE registration_status ADD VALUE IF NOT EXISTS 'Disabled';
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- Add rejection_reason to Users
+ALTER TABLE Users ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
+
+-- Admin Audit Logs
+CREATE TABLE IF NOT EXISTS AdminAuditLogs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    admin_id UUID REFERENCES Users(id),
+    admin_user_id VARCHAR(20),
+    action VARCHAR(100) NOT NULL,
+    target_user_id UUID REFERENCES Users(id),
+    target_public_user_id VARCHAR(20),
+    ip_address INET,
+    details JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_audit_admin ON AdminAuditLogs(admin_id);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON AdminAuditLogs(created_at DESC);
+
 CREATE INDEX IF NOT EXISTS idx_users_role ON Users(role);
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON Sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_auditlogs_user_id ON AuthLogs(user_id);
 CREATE INDEX IF NOT EXISTS idx_records_patient_id ON MedicalRecords(Patient_ID);
 CREATE INDEX IF NOT EXISTS idx_consent_patient_subject ON Consent(Patient_ID, Subject_User_ID);
+
+-- Email Notifications
+CREATE TABLE IF NOT EXISTS EmailNotifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES Users(id) ON DELETE SET NULL,
+    email_address VARCHAR(100) NOT NULL,
+    notification_type VARCHAR(20) NOT NULL, -- 'APPROVAL', 'REJECTION'
+    email_subject VARCHAR(255) NOT NULL,
+    email_content TEXT NOT NULL,
+    sent_status VARCHAR(20) NOT NULL DEFAULT 'PENDING', -- 'SENT', 'FAILED', 'PENDING'
+    sent_timestamp TIMESTAMPTZ,
+    error_message TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_notifications_user ON EmailNotifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_email_notifications_status ON EmailNotifications(sent_status);
+

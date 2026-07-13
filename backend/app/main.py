@@ -1,12 +1,15 @@
-from fastapi import FastAPI, Depends, HTTPException, Request, Response, status
+import math
+from fastapi import FastAPI, Depends, HTTPException, Request, Response, status, Body
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
+from typing import Optional
 import psycopg
 from psycopg.rows import dict_row
 
 from app.schemas import (
     RegistrationRequest, LoginRequest, RegistrationResponse, LoginResponse, 
-    PendingRegistration, AdminActionRequest, AdminActionResponse
+    PendingRegistration, AdminActionRequest, AdminActionResponse,
+    RejectRequest, DashboardStats, UserDetail, AuditLogEntry, SecurityStats
 )
 from app.database import get_db, init_db
 from app.security import (
@@ -14,9 +17,10 @@ from app.security import (
     create_session_token, get_current_session, require_role, require_permission
 )
 from app.crypto_service import generate_mlkem_keypair, generate_mldsa_keypair
-from app.email_service import send_approval_email, send_rejection_email, send_admin_notification
+from app.email_service import send_and_log_email, retry_failed_email, send_admin_notification
 from app.user_id_service import generate_user_id
 from app.rbac import get_permissions_for_role, normalize_role
+from app.audit_service import log_admin_action
 
 app = FastAPI(title="PQC Hospital IAM API", version="2.0.0")
 
@@ -88,6 +92,8 @@ def login(request: LoginRequest, response: Response):
                 raise HTTPException(status_code=403, detail="Your registration is currently under administrator verification.")
             if user["status"] == "Rejected":
                 raise HTTPException(status_code=403, detail="Your registration request was not approved.")
+            if user["status"] == "Disabled":
+                raise HTTPException(status_code=403, detail="Your account has been disabled. Contact administrator.")
                 
             if not verify_password(request.password, user["password_hash"]):
                 # Log failed attempt
@@ -192,7 +198,7 @@ def get_all_registrations(session: dict = Depends(require_role("Administrator"))
     return results
 
 @app.post("/api/admin/registrations/{user_uuid}/approve", response_model=AdminActionResponse)
-def approve_registration(user_uuid: str, session: dict = Depends(require_role("Administrator"))):
+def approve_registration(user_uuid: str, request: Request, session: dict = Depends(require_role("Administrator"))):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("SELECT * FROM Users WHERE id = %s", (user_uuid,))
@@ -221,12 +227,44 @@ def approve_registration(user_uuid: str, session: dict = Depends(require_role("A
             ))
             conn.commit()
             
-    send_approval_email(user["email"], user["full_name"], new_user_id)
+        # Log admin action
+        log_admin_action(
+            conn, session["user_id"], session.get("public_user_id"),
+            "REGISTRATION_APPROVED", user_uuid, new_user_id,
+            request.client.host if request else None,
+            {"role": user["role"]}
+        )
+
+        # Send and log approval email
+        email_res = send_and_log_email(
+            conn,
+            user_uuid,
+            user["email"],
+            user["full_name"],
+            "APPROVAL",
+            user_id_gen=new_user_id
+        )
+            
+    if email_res["sent_status"] == "FAILED":
+        return {
+            "message": "Account approved successfully, but email delivery failed. Please retry sending the notification.",
+            "user_id": new_user_id,
+            "email_sent": False
+        }
     
-    return {"message": "Registration approved successfully", "user_id": new_user_id}
+    return {
+        "message": f"Registration Approved Successfully\nUser ID Generated: {new_user_id}\nApproval email sent successfully.",
+        "user_id": new_user_id,
+        "email_sent": True
+    }
 
 @app.post("/api/admin/registrations/{user_uuid}/reject", response_model=AdminActionResponse)
-def reject_registration(user_uuid: str, session: dict = Depends(require_role("Administrator"))):
+def reject_registration(
+    user_uuid: str,
+    request: Request,
+    body: RejectRequest = Body(default=RejectRequest()),
+    session: dict = Depends(require_role("Administrator"))
+):
     with get_db() as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("SELECT * FROM Users WHERE id = %s", (user_uuid,))
@@ -237,12 +275,43 @@ def reject_registration(user_uuid: str, session: dict = Depends(require_role("Ad
             if user["status"] != "Pending":
                 raise HTTPException(status_code=400, detail="Registration is not pending")
                 
-            cur.execute("UPDATE Users SET status = 'Rejected' WHERE id = %s", (user_uuid,))
+            cur.execute(
+                "UPDATE Users SET status = 'Rejected', rejection_reason = %s WHERE id = %s",
+                (body.reason, user_uuid)
+            )
             conn.commit()
+
+        # Log admin action
+        details = {"role": user["role"]}
+        if body.reason:
+            details["reason"] = body.reason
+        log_admin_action(
+            conn, session["user_id"], session.get("public_user_id"),
+            "REGISTRATION_REJECTED", user_uuid, user.get("user_id"),
+            request.client.host if request else None,
+            details
+        )
+
+        # Send and log rejection email
+        email_res = send_and_log_email(
+            conn,
+            user_uuid,
+            user["email"],
+            user["full_name"],
+            "REJECTION",
+            reason=body.reason
+        )
             
-    send_rejection_email(user["email"], user["full_name"])
+    if email_res["sent_status"] == "FAILED":
+        return {
+            "message": "Registration Rejected Successfully, but email delivery failed. Please retry sending the notification.",
+            "email_sent": False
+        }
     
-    return {"message": "Registration rejected"}
+    return {
+        "message": "Registration Rejected Successfully\nRejection notification sent to registered email.",
+        "email_sent": True
+    }
 
 @app.get("/api/dashboard/{dashboard_role}")
 def dashboard_gate(dashboard_role: str, session: dict = Depends(get_current_session)):
@@ -250,6 +319,355 @@ def dashboard_gate(dashboard_role: str, session: dict = Depends(get_current_sess
     if dashboard_role.lower() not in {allowed_role.lower().replace(" ", ""), allowed_role.lower().replace(" ", "-")}:
         raise HTTPException(status_code=403, detail="Forbidden.")
     return {"status": "success", "dashboard_role": dashboard_role, "session": session}
+
+
+# ─── Admin Dashboard Endpoints ───────────────────────────────────────────────
+
+@app.get("/api/admin/dashboard/stats")
+def get_dashboard_stats(session: dict = Depends(require_role("Administrator"))):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            # User counts by role and status
+            cur.execute("""
+                SELECT 
+                    COUNT(*) as total,
+                    COUNT(*) FILTER (WHERE role = 'Patient') as patients,
+                    COUNT(*) FILTER (WHERE role = 'Doctor') as doctors,
+                    COUNT(*) FILTER (WHERE role = 'Nurse') as nurses,
+                    COUNT(*) FILTER (WHERE role = 'Lab Technician') as lab_techs,
+                    COUNT(*) FILTER (WHERE status = 'Pending') as pending,
+                    COUNT(*) FILTER (WHERE status = 'Approved') as approved,
+                    COUNT(*) FILTER (WHERE status = 'Rejected') as rejected,
+                    COUNT(*) FILTER (WHERE status = 'Disabled') as disabled
+                FROM Users
+            """)
+            user_stats = cur.fetchone()
+
+            # Active sessions
+            cur.execute("SELECT COUNT(*) as cnt FROM Sessions WHERE expires_at > NOW() AND is_active = TRUE")
+            active_sessions = cur.fetchone()["cnt"]
+
+            # PQC keys generated
+            cur.execute("SELECT COUNT(*) as cnt FROM Users WHERE mlkem_public_key IS NOT NULL")
+            pqc_keys = cur.fetchone()["cnt"]
+
+    return DashboardStats(
+        total_users=user_stats["total"],
+        total_patients=user_stats["patients"],
+        total_doctors=user_stats["doctors"],
+        total_nurses=user_stats["nurses"],
+        total_lab_technicians=user_stats["lab_techs"],
+        pending_requests=user_stats["pending"],
+        approved_users=user_stats["approved"],
+        rejected_users=user_stats["rejected"],
+        disabled_users=user_stats["disabled"],
+        active_sessions=active_sessions,
+        pqc_keys_generated=pqc_keys
+    )
+
+
+@app.get("/api/admin/dashboard/recent-activity")
+def get_recent_activity(session: dict = Depends(require_role("Administrator"))):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT id, admin_user_id, action, target_public_user_id, details, created_at
+                FROM AdminAuditLogs
+                ORDER BY created_at DESC
+                LIMIT 20
+            """)
+            rows = cur.fetchall()
+
+    return [
+        AuditLogEntry(
+            id=str(row["id"]),
+            admin_user_id=row["admin_user_id"],
+            action=row["action"],
+            target_public_user_id=row["target_public_user_id"],
+            details=row["details"],
+            created_at=row["created_at"]
+        )
+        for row in rows
+    ]
+
+
+@app.get("/api/admin/users")
+def list_users(
+    role: Optional[str] = None,
+    status: Optional[str] = None,
+    search: Optional[str] = None,
+    page: int = 1,
+    per_page: int = 10,
+    session: dict = Depends(require_role("Administrator"))
+):
+    conditions = []
+    params = []
+
+    if role:
+        conditions.append("role = %s")
+        params.append(role)
+    if status:
+        conditions.append("status = %s")
+        params.append(status)
+    if search:
+        conditions.append("(user_id ILIKE %s OR full_name ILIKE %s OR email ILIKE %s)")
+        search_pattern = f"%{search}%"
+        params.extend([search_pattern, search_pattern, search_pattern])
+
+    where_clause = ""
+    if conditions:
+        where_clause = "WHERE " + " AND ".join(conditions)
+
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            # Total count
+            cur.execute(f"SELECT COUNT(*) as cnt FROM Users {where_clause}", params)
+            total = cur.fetchone()["cnt"]
+
+            # Paginated results
+            offset = (page - 1) * per_page
+            cur.execute(
+                f"""SELECT id, user_id, full_name, email, role, gender, status, created_at
+                    FROM Users {where_clause}
+                    ORDER BY created_at DESC
+                    LIMIT %s OFFSET %s""",
+                params + [per_page, offset]
+            )
+            rows = cur.fetchall()
+
+    total_pages = math.ceil(total / per_page) if per_page > 0 else 0
+
+    users = [
+        {
+            "id": str(row["id"]),
+            "user_id": row["user_id"],
+            "full_name": row["full_name"],
+            "email": row["email"],
+            "role": row["role"],
+            "gender": row["gender"],
+            "status": row["status"],
+            "created_at": row["created_at"].isoformat() if row["created_at"] else None
+        }
+        for row in rows
+    ]
+
+    return {
+        "users": users,
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": total_pages
+    }
+
+
+@app.get("/api/admin/users/{user_uuid}")
+def get_user_detail(user_uuid: str, session: dict = Depends(require_role("Administrator"))):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT * FROM Users WHERE id = %s", (user_uuid,))
+            user = cur.fetchone()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return UserDetail(
+        id=str(user["id"]),
+        user_id=user["user_id"],
+        full_name=user["full_name"],
+        email=user["email"],
+        role=user["role"],
+        gender=user["gender"],
+        date_of_birth=decrypt_data(user["date_of_birth_encrypted"]) if user["date_of_birth_encrypted"] else None,
+        blood_group=decrypt_data(user["blood_group_encrypted"]) if user["blood_group_encrypted"] else None,
+        specialization=user["specialization"],
+        status=user["status"],
+        rejection_reason=user.get("rejection_reason"),
+        has_mlkem_keys=user["mlkem_public_key"] is not None,
+        has_mldsa_keys=user["mldsa_public_key"] is not None,
+        created_at=user["created_at"],
+        approved_at=user["approved_at"]
+    )
+
+
+@app.post("/api/admin/users/{user_uuid}/disable")
+def disable_user(user_uuid: str, request: Request, session: dict = Depends(require_role("Administrator"))):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT id, user_id, status, role FROM Users WHERE id = %s", (user_uuid,))
+            user = cur.fetchone()
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+            if user["status"] != "Approved":
+                raise HTTPException(status_code=400, detail="Only approved users can be disabled")
+
+            cur.execute("UPDATE Users SET status = 'Disabled' WHERE id = %s", (user_uuid,))
+            conn.commit()
+
+        log_admin_action(
+            conn, session["user_id"], session.get("public_user_id"),
+            "USER_DISABLED", user_uuid, user["user_id"],
+            request.client.host if request else None,
+            {"role": user["role"]}
+        )
+
+    return {"message": "User account has been disabled"}
+
+
+@app.post("/api/admin/users/{user_uuid}/enable")
+def enable_user(user_uuid: str, request: Request, session: dict = Depends(require_role("Administrator"))):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT id, user_id, status, role FROM Users WHERE id = %s", (user_uuid,))
+            user = cur.fetchone()
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+            if user["status"] != "Disabled":
+                raise HTTPException(status_code=400, detail="Only disabled users can be re-enabled")
+
+            cur.execute("UPDATE Users SET status = 'Approved' WHERE id = %s", (user_uuid,))
+            conn.commit()
+
+        log_admin_action(
+            conn, session["user_id"], session.get("public_user_id"),
+            "USER_ENABLED", user_uuid, user["user_id"],
+            request.client.host if request else None,
+            {"role": user["role"]}
+        )
+
+    return {"message": "User account has been re-enabled"}
+
+
+@app.get("/api/admin/audit-logs")
+def get_audit_logs(
+    action: Optional[str] = None,
+    page: int = 1,
+    per_page: int = 20,
+    session: dict = Depends(require_role("Administrator"))
+):
+    conditions = []
+    params = []
+
+    if action:
+        conditions.append("action = %s")
+        params.append(action)
+
+    where_clause = ""
+    if conditions:
+        where_clause = "WHERE " + " AND ".join(conditions)
+
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(f"SELECT COUNT(*) as cnt FROM AdminAuditLogs {where_clause}", params)
+            total = cur.fetchone()["cnt"]
+
+            offset = (page - 1) * per_page
+            cur.execute(
+                f"""SELECT id, admin_user_id, action, target_public_user_id, details, created_at
+                    FROM AdminAuditLogs {where_clause}
+                    ORDER BY created_at DESC
+                    LIMIT %s OFFSET %s""",
+                params + [per_page, offset]
+            )
+            rows = cur.fetchall()
+
+    total_pages = math.ceil(total / per_page) if per_page > 0 else 0
+
+    logs = [
+        AuditLogEntry(
+            id=str(row["id"]),
+            admin_user_id=row["admin_user_id"],
+            action=row["action"],
+            target_public_user_id=row["target_public_user_id"],
+            details=row["details"],
+            created_at=row["created_at"]
+        )
+        for row in rows
+    ]
+
+    return {
+        "logs": [log.model_dump() for log in logs],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": total_pages
+    }
+
+
+@app.get("/api/admin/security/stats")
+def get_security_stats(session: dict = Depends(require_role("Administrator"))):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            # Failed login attempts in last 24 hours
+            cur.execute("""
+                SELECT COUNT(*) as cnt FROM AuthLogs 
+                WHERE action = 'LOGIN_FAILED' AND created_at > NOW() - INTERVAL '24 hours'
+            """)
+            failed_logins = cur.fetchone()["cnt"]
+
+            # Disabled accounts
+            cur.execute("SELECT COUNT(*) as cnt FROM Users WHERE status = 'Disabled'")
+            disabled = cur.fetchone()["cnt"]
+
+            # Active sessions
+            cur.execute("SELECT COUNT(*) as cnt FROM Sessions WHERE expires_at > NOW() AND is_active = TRUE")
+            active_sessions = cur.fetchone()["cnt"]
+
+            # Total PQC keypairs
+            cur.execute("SELECT COUNT(*) as cnt FROM Users WHERE mlkem_public_key IS NOT NULL")
+            total_pqc = cur.fetchone()["cnt"]
+
+            # Active crypto identities
+            cur.execute("SELECT COUNT(*) as cnt FROM Users WHERE mlkem_public_key IS NOT NULL AND status = 'Approved'")
+            active_crypto = cur.fetchone()["cnt"]
+
+    return SecurityStats(
+        failed_login_attempts_24h=failed_logins,
+        disabled_accounts=disabled,
+        active_sessions=active_sessions,
+        total_pqc_keypairs=total_pqc,
+        active_crypto_identities=active_crypto
+    )
+
+
+@app.get("/api/admin/users/{user_uuid}/emails")
+def get_user_emails(user_uuid: str, session: dict = Depends(require_role("Administrator"))):
+    with get_db() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT id, user_id, email_address, notification_type, email_subject, email_content, sent_status, sent_timestamp, error_message, created_at
+                FROM EmailNotifications
+                WHERE user_id = %s
+                ORDER BY created_at DESC
+            """, (user_uuid,))
+            rows = cur.fetchall()
+            
+    return [
+        {
+            "id": str(row["id"]),
+            "user_id": str(row["user_id"]) if row["user_id"] else None,
+            "email_address": row["email_address"],
+            "notification_type": row["notification_type"],
+            "email_subject": row["email_subject"],
+            "email_content": row["email_content"],
+            "sent_status": row["sent_status"],
+            "sent_timestamp": row["sent_timestamp"].isoformat() if row["sent_timestamp"] else None,
+            "error_message": row["error_message"],
+            "created_at": row["created_at"].isoformat() if row["created_at"] else None
+        }
+        for row in rows
+    ]
+
+
+@app.post("/api/admin/emails/{notification_id}/resend")
+def resend_failed_email_endpoint(notification_id: str, session: dict = Depends(require_role("Administrator"))):
+    with get_db() as conn:
+        res = retry_failed_email(conn, notification_id)
+        
+    if res["sent_status"] == "FAILED":
+        raise HTTPException(status_code=400, detail=f"Failed to resend email: {res['error_message']}")
+        
+    return {"message": "Email resent successfully", "status": res["sent_status"]}
+
 
 if __name__ == "__main__":
     import uvicorn
